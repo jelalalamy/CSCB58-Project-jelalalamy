@@ -55,8 +55,13 @@ player_y: .word 61
 player_position: .word 0
 player_on_platform: .word 0
 
+# Platforms
+platforms_3: .word 14888, 14952
+platforms_3_length: .word 2 
+
 # Counters
 jump_counter: .word 0
+array_counter: .word 0
 
 ######
 # Conventions
@@ -222,7 +227,29 @@ init_level:
 		j loop_draw_floor
 	
 	end_draw_floor:
+	
+	draw_platforms_3:
+		li $t0, BASE_ADDRESS	# base address for display
+		li $t1, BLUE_1		# blue colour code
+		li $t2, 0		# loop counter
+		la $t3, platforms_3	# array address
+		lw $t4, platforms_3_length	# array length
 		
+	loop_draw_platforms_3:
+		bge $t2, 2, end_draw_platforms_3	# if loop counter >= array length (since we start at 0), stop
+		sll $t5, $t2, 2		# multiply loop counter by 4 to get byte offset
+		add $t5, $t5, $t3	# add byte offset to array address
+		lw $a0, ($t5)		# store array element in $a0
+		add $t5, $a0, $t0	# add base address
+		sw $t1, ($t5)		# colour blue
+		add $t5, $t5, 4
+		sw $t1 ($t5)
+		add $t5, $t5, 4
+		sw $t1 ($t5)
+		add $t2, $t2, 1		# increment loop counter
+    		j loop_draw_platforms_3
+    		
+    	end_draw_platforms_3:
 	
 	# Draw player initial position
 	# Compute position according to formula (x, y) = (y*64 + x)*4 and store in $t1
