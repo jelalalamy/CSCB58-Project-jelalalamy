@@ -35,6 +35,7 @@
 #####################################################################
 .eqv BASE_ADDRESS 0x10008000
 .eqv WAIT_TIME 40
+.eqv JUMP_HEIGHT 6
 .data
 # Strings
 start_str: .asciiz "Game started\n"
@@ -44,8 +45,8 @@ test_str: .asciiz "Something happened\n"
 
 # Player (coords refer to the player's feet
 player_x: .word 0
-player_y: .word 63
-player_position: .word 16128
+player_y: .word 61
+player_position: .word 0
 player_on_platform: .word 0
 
 # Colours
@@ -103,13 +104,18 @@ game_loop:
 		# Check if a player is currently jumping, on a platform, or falling
 		lw $t1, jump_counter
 		bgtz $t1, jumping
-		lw $t1, player_on_platform
-		bgtz $t1, sleep_and_loop
+		# Floor is y=62, so check if player has y=61
+		lw $t1, player_y
+		seq $t2, $t1, 61
+		sw $t2, player_on_platform
+		bgtz $t2, sleep_and_loop
 		j falling
+		
+		# to check collision, keep an array of platform pixels?
 		
 	start_jump:
 		# Set jump counter
-		li $t1, 5
+		li $t1, JUMP_HEIGHT
 		sw $t1, jump_counter
 		j jumping
 		
@@ -198,18 +204,39 @@ game_loop:
 		j game_loop
 
 init_level:
-	li $t0, BASE_ADDRESS 	# $t0 stores the base address for display
-	lw $t1, red_1		# $t1 stores the red colour code
-	lw $t2, green_1		# $t2 stores the green colour code
-	lw $t3, blue_1		# $t3 stores the blue colour code
+	# Draw floor
+	draw_floor:
+		li $t0, BASE_ADDRESS 	# $t0 stores the base address for display
+		lw $t1, red_1		# $t1 stores the red colour code
+		li $t2, 0	# loop counter
+		li $t3, 15872
+		add $t3, $t3, $t0
+
+	loop_draw_floor:
+		bgt $t2, 63, end_draw_floor
+		sw $t1, ($t3)
+		add $t3, $t3, 4
+		add $t2, $t2, 1
+		j loop_draw_floor
 	
-	sw $t1, 0($t0)		# paint the first (top-left) unit red. (0,0) = 0*4 + 0*256
-	sw $t2, 4($t0) 		# paint the second unit on the first row green. Why $t0+4? (1, 0) = (0*64 + 1)*4
-	sw $t3, 256($t0)	# paint the first unit on the second row blue. Why +256? (0,1) = (1*64 + 0)*4
+	end_draw_floor:
+		
 	
-	sw $t2, 16128($t0) 	# draw player initial position (bottom left)
+	# Draw player initial position
+	# Compute position according to formula (x, y) = (y*64 + x)*4 and store in $t1
+	lw $s0, player_x
+	lw $s1, player_y
+	mul $t1, $s1, 64
+	add $t1, $t1, $s0
+	mul $t1, $t1, 4
+	sw $t1, player_position
+	add $t1, $t1, $t0
+	lw $t2, green_1
+	sw $t2, ($t1)
 	
 	jr $ra
+	
+	
 
 end:
 	# Print end message
