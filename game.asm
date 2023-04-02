@@ -46,12 +46,16 @@ test_str: .asciiz "Something happened\n"
 player_x: .word 0
 player_y: .word 63
 player_position: .word 16128
+player_on_platform: .word 0
 
 # Colours
 red_1: .word 0xff0000 
 green_1: .word 0x00ff00
 blue_1: .word 0x0000ff
 black: .word 0x000000
+
+# Counters
+jump_counter: .word 0
 
 ######
 # Conventions
@@ -77,16 +81,17 @@ game_loop:
 	li $t9, 0xffff0000
 	lw $t8, 0($t9)
 	beq $t8, 1, keypress_happened
-	j sleep_and_loop
+	j check_player_state
 	
 	keypress_happened:
 		lw $t2, 4($t9)
 		beq $t2, 0x64, move_player_coords_right
 		beq $t2, 0x61, move_player_coords_left
-		beq $t2, 0x20, move_player_coords_up
+		beq $t2, 0x20, start_jump
+		beq $t2, 0x77, move_player_coords_up
 		beq $t2, 0x73, move_player_coords_down
 		beq $t2, 0x71, respond_to_q
-		j sleep_and_loop
+		j check_player_state
 	
 	respond_to_q:
 		li $v0, 4
@@ -94,34 +99,70 @@ game_loop:
 		syscall
 		jr $ra
 		
+	check_player_state:
+		# Check if a player is currently jumping, on a platform, or falling
+		lw $t1, jump_counter
+		bgtz $t1, jumping
+		lw $t1, player_on_platform
+		bgtz $t1, sleep_and_loop
+		j falling
+		
+	start_jump:
+		# Set jump counter
+		li $t1, 5
+		sw $t1, jump_counter
+		j jumping
+		
+	jumping:
+		# Decrement jump_counter and move player up
+		lw $t1, jump_counter
+		addi $t1, $t1, -1
+		sw $t1, jump_counter
+		j move_player_coords_up
+		
+	falling:
+		j move_player_coords_down
+		
 	move_player_coords_right:
-		# Get player x-coordinate and increment by 1 to move right
+		# Get player coordinates
 		lw $s0, player_x
 		lw $s1, player_y
+		# If the player is already at the right edge, do not move
+		beq $s0, 63, sleep_and_loop
+		# Increment by 1 to move right
 		addi $s0, $s0, 1
 		sw $s0, player_x
 		j update_player_position
 		
 	move_player_coords_left:
-		# Get player x-coordinate and decrement by 1 to move left
+		# Get player coordinates
 		lw $s0, player_x
 		lw $s1, player_y
+		# If the player is already at the left edge, do not move
+		beq $s0, 0, sleep_and_loop
+		# Decrement by 1 to move left
 		addi $s0, $s0, -1
 		sw $s0, player_x
 		j update_player_position
 
 	move_player_coords_up:
-		# Get player y-coordinate and decrement by 1 to move up
+		# Get player coordinates
 		lw $s0, player_x
 		lw $s1, player_y
+		# If the player is already at the top edge, do not move
+		beq $s1, 0, sleep_and_loop
+		# Decrement by 1 to move up
 		addi $s1, $s1, -1
 		sw $s1, player_y
 		j update_player_position
 		
 	move_player_coords_down:
-		# Get player y-coordinate and increment by 1 to move right
+		# Get player coordinates
 		lw $s0, player_x
 		lw $s1, player_y
+		# If the player is already at the bottom edge, do not move
+		beq $s1, 63, sleep_and_loop
+		# Increment by 1 to move up
 		addi $s1, $s1, 1
 		sw $s1, player_y
 		j update_player_position
@@ -147,9 +188,9 @@ game_loop:
 		
 	sleep_and_loop:
 		# Prints once per loop
-		li $v0, 4
-		la $a0, test_str
-		syscall
+		#li $v0, 4
+		#la $a0, test_str
+		#syscall
 		
 		li $v0, 32
 		li $a0, WAIT_TIME
