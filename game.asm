@@ -33,9 +33,15 @@
 # - (write here, if any)
 #
 #####################################################################
+# Constants
 .eqv BASE_ADDRESS 0x10008000
 .eqv WAIT_TIME 40
 .eqv JUMP_HEIGHT 6
+.eqv RED_1 0xff0000
+.eqv GREEN_1 0x00ff00
+.eqv BLUE_1 0x0000ff
+.eqv BLACK 0x000000
+
 .data
 # Strings
 start_str: .asciiz "Game started\n"
@@ -48,12 +54,6 @@ player_x: .word 0
 player_y: .word 61
 player_position: .word 0
 player_on_platform: .word 0
-
-# Colours
-red_1: .word 0xff0000 
-green_1: .word 0x00ff00
-blue_1: .word 0x0000ff
-black: .word 0x000000
 
 # Counters
 jump_counter: .word 0
@@ -181,14 +181,14 @@ game_loop:
 		
 		# Erase old position
 		li $t0, BASE_ADDRESS
-		lw $t2, black
+		li $t2, BLACK
 		lw $s2, player_position
 		add $s2, $s2, $t0
 		sw $t2, ($s2)
 		
 		# Draw new position
 		sw $t1, player_position
-		lw $t2, green_1
+		li $t2, GREEN_1
 		add $t1, $t1, $t0
 		sw $t2, ($t1)
 		
@@ -207,7 +207,7 @@ init_level:
 	# Draw floor
 	draw_floor:
 		li $t0, BASE_ADDRESS 	# $t0 stores the base address for display
-		lw $t1, red_1		# $t1 stores the red colour code
+		li $t1, RED_1		# $t1 stores the red colour code
 		li $t2, 0	# loop counter
 		li $t3, 15872
 		add $t3, $t3, $t0
@@ -231,7 +231,7 @@ init_level:
 	mul $t1, $t1, 4
 	sw $t1, player_position
 	add $t1, $t1, $t0
-	lw $t2, green_1
+	li $t2, GREEN_1
 	sw $t2, ($t1)
 	
 	jr $ra
