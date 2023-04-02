@@ -101,20 +101,22 @@ game_loop:
 		jr $ra
 		
 	check_player_state:
-		# Check if a player is currently jumping, on a platform, or falling
-		lw $t1, jump_counter
-		bgtz $t1, jumping
 		# Floor is y=62, so check if player has y=61
 		lw $t1, player_y
 		seq $t2, $t1, 61
 		sw $t2, player_on_platform
 		bgtz $t2, sleep_and_loop
+		# Check if a player is currently jumping, on a platform, or falling
+		lw $t1, jump_counter
+		bgtz $t1, jumping
 		j falling
 		
 		# to check collision, keep an array of platform pixels?
 		
 	start_jump:
 		# Set jump counter
+		lw $t1, player_on_platform
+		beqz $t1, sleep_and_loop
 		li $t1, JUMP_HEIGHT
 		sw $t1, jump_counter
 		j jumping
@@ -236,8 +238,6 @@ init_level:
 	
 	jr $ra
 	
-	
-
 end:
 	# Print end message
 	li $v0, 4
