@@ -118,8 +118,19 @@ update_player_position:
 	lw $k1, player_y
 	
 	# $t3 currently stores the key pressed
-	# If d was pressed, move the player right
+	# Move using wasd
+	beq $t3, 0x61, move_player_left
 	beq $t3, 0x64, move_player_right
+	beq $t3, 0x77, move_player_up
+	beq $t3, 0x73, move_player_down
+	j check_collisions
+	
+move_player_left:
+	lw $t1, player_x
+	# Do not move the player if they are at the right edge already
+	beq $t1, 0, check_collisions
+	add $t1, $t1, -1
+	sw $t1, player_x
 	j check_collisions
 	
 move_player_right:
@@ -128,6 +139,22 @@ move_player_right:
 	beq $t1, 63, check_collisions
 	add $t1, $t1, 1
 	sw $t1, player_x
+	j check_collisions
+	
+move_player_up:
+	lw $t1, player_y
+	# Do not move the player if they are at the right edge already
+	beq $t1, 0, check_collisions
+	add $t1, $t1, -1
+	sw $t1, player_y
+	j check_collisions
+
+move_player_down:
+	lw $t1, player_y
+	# Do not move the player if they are at the right edge already
+	beq $t1, 63, check_collisions
+	add $t1, $t1, 1
+	sw $t1, player_y
 	j check_collisions
 
 # Check for collisions
