@@ -27,10 +27,16 @@
 # - (insert YouTube / MyMedia / other URL here). Make sure we can view it!
 #
 # Are you OK with us sharing the video with people outside course staff?
-# - yes / no / yes, and please share this project github link as well!
+# - yes, and please share this project github link as well!
 #
 # Any additional information that the TA needs to know:
-# - (write here, if any)
+# - Controls:
+# - a: move left
+# - d: move right
+# - j: short jump
+# - k: middle jump
+# - l: long jump
+# - space: high jump
 #
 ##################################################################### DATA
 # Constants
@@ -53,7 +59,9 @@ loop_str: .asciiz "Sleeping then looping\n"
 # Player state
 player_x: .word 0	# ranges from 0-63
 player_y: .word 61	# ranges from 0-63
+player_direction: .word	1	# 0 for left, 1 for right
 player_state: .word 0	# 0 for on platform, 1 for jumping, 2 for falling
+jump_frame: .word 0
 
 ##################################################################### MAIN
 .text
@@ -101,15 +109,14 @@ check_user_input:
 	lw $t2, 0($t1)
 	# If no key was pressed, move on to next step
 	li $t3, 0
-	bne $t2, 1, check_on_platform
+	bne $t2, 1, check_player_state
 	# If key was pressed, store it in $t3
 	lw $t3, 4($t1)
 	# If q was pressed, then quit immediately, otherwise continue to check_on_platform
 	beq $t3, 0x71, game_loop_return
 
 # Check if the player is on a platform
-check_on_platform:
-	
+check_player_state:
 	
 # Update locations and stuff
 update_player_position:
@@ -123,8 +130,14 @@ update_player_position:
 	beq $t3, 0x64, move_player_right
 	beq $t3, 0x77, move_player_up
 	beq $t3, 0x73, move_player_down
+	beq $t3, 0x6A, short_jump
 	j check_collisions
-	
+
+short_jump:
+	# For now a short jump will have 8 frames: up, right, up, right, right, down, right, down
+	# Move the player depending on the jump frame
+	j check_collisions
+
 move_player_left:
 	lw $t1, player_x
 	# Do not move the player if they are at the right edge already
