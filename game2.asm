@@ -35,7 +35,7 @@
 ##################################################################### DATA
 # Constants
 .eqv BASE_ADDRESS 0x10008000
-.eqv WAIT_TIME 1000
+.eqv WAIT_TIME 40
 .eqv JUMP_HEIGHT 6
 .eqv RED_1 0xff0000
 .eqv GREEN_1 0x00ff00
@@ -71,7 +71,7 @@ main:
 	jal init_player_func
 	
 	# Main game loop
-	#jal game_loop_func
+	jal game_loop_func
 	
 	# Finished game
 	j end
@@ -100,6 +100,7 @@ check_user_input:
 	li $t1, 0xffff0000
 	lw $t2, 0($t1)
 	# If no key was pressed, move on to next step
+	li $t3, 0
 	bne $t2, 1, check_on_platform
 	# If key was pressed, store it in $t3
 	lw $t3, 4($t1)
@@ -112,9 +113,14 @@ check_on_platform:
 	
 # Update locations and stuff
 update_player_position:
+	# Store player current position so we can erase it later (use $k0 and $k1 for now)
+	lw $k0, player_x
+	lw $k1, player_y
+	
 	# $t3 currently stores the key pressed
 	# If d was pressed, move the player right
 	beq $t3, 0x64, move_player_right
+	j check_collisions
 	
 move_player_right:
 	lw $t1, player_x
@@ -130,8 +136,24 @@ check_collisions:
 # Update other game states (if needed)
 
 # Erase old objects
-
+erase_old_objects:
+	# Compute their position and then call erase_player_func
+	add $a1, $k0, 0
+	add $a2, $k1, 0
+	jal compute_position_func
+	# $a0 already stores the position so we can call erase_player_func immediately
+	jal erase_player_func
+	
 # Draw new objects
+draw_new_objects:
+# Draw player in the new position
+draw_new_player:
+	# Compute their position and then call draw_player_func
+	lw $a1, player_x
+	lw $a2, player_y
+	jal compute_position_func
+	# $a0 already stores the position so we can call draw_player_func immediately
+	jal draw_player_func
 	
 # Sleep and loop
 sleep_and_loop:
@@ -180,6 +202,17 @@ draw_player_func:
 	li $t1, GREEN_1
 	add $a0, $a0, $t0
 	sw $t1, ($a0)
+	jr $ra
+	
+# Helper function to erase the player (usually their previous location)
+# Parameters:
+# $a0 - position (compute using compute_position_func, or just pass an immediate)
+erase_player_func:
+	li $t0, BASE_ADDRESS
+	li $t1, BLACK
+	add $a0, $a0, $t0
+	sw $t1, ($a0)
+	jr $ra
 
 # Function to draw the inital level (platforms and stuff)
 # No parameters or return 
