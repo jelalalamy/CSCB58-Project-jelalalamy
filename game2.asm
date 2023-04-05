@@ -65,6 +65,7 @@ player_y_velocity: .word 0
 player_direction: .word	1	# 0 for left, 1 for right
 player_state: .word 2	# 0 for on platform, 1 for jumping, 2 for falling
 jump_frame: .word 0
+jump_type: .word 0	# 0 for short, 1 for mid, 2 for long
 
 # Platforms
 collision_pixels: .space 4096
@@ -127,6 +128,8 @@ check_player_state:
 	lw $t1, player_state
 	# Only allow inputs while on a platform
 	beq $t1, 0, on_platform
+	# If jumping
+	beq $t1, 1, jumping
 	# If falling,
 	beq $t1, 2, falling
 
@@ -142,20 +145,76 @@ falling:
 	# For now set the player x velocity to 0, eventually we want to preserve velocity when falling after jumping
 	sw $zero, player_x_velocity
 	j update_player_position
-	
+
+jumping:
+	lw $t1, jump_type
+	beq $t1, 0, short_jump
+			
 # Update locations and stuff
 handle_inputs:	
 	# $t3 currently stores the key pressed
 	# Move using wasd
 	beq $t3, 0x61, a_pressed
 	beq $t3, 0x64, d_pressed
-	beq $t3, 0x6A, short_jump
+	beq $t3, 0x6A, start_short_jump
 	j update_player_position
 
+start_short_jump:
+	sw $zero, jump_frame
+	li $t1, 1
+	sw $t1, player_state
+	j short_jump
+
 short_jump:
-	# For now a short jump will have 8 frames: up, right, up, right, right, down, right, down
-	# Move the player depending on the jump frame
-	#j update_player_position
+	lw $t1, player_direction
+	beq $t1, 0, short_jump_left
+	beq $t1, 1, short_jump_right
+
+short_jump_right:
+	lw $t1, jump_frame
+	beq $t1, 0, short_jump_right_0
+	beq $t1, 1, short_jump_right_0
+	beq $t1, 2, short_jump_right_1
+	beq $t1, 3, short_jump_right_1
+	beq $t1, 4, short_jump_right_2
+	beq $t1, 5, short_jump_right_2
+	beq $t1, 6, end_jump
+	
+short_jump_right_0:
+	li $t1, 1
+	li $t2, -1
+	sw $t1, player_x_velocity
+	sw $t2, player_y_velocity
+	j update_jump_frame
+	
+short_jump_right_1:
+	li $t1, 1
+	sw $t1, player_x_velocity
+	sw $zero, player_y_velocity
+	j update_jump_frame
+	
+short_jump_right_2:
+	li $t1, 1
+	sw $t1, player_x_velocity
+	sw $t1, player_y_velocity
+	j update_jump_frame
+	
+
+short_jump_left:
+
+update_jump_frame:
+	lw $t1, jump_frame
+	add $t1, $t1, 1
+	sw $t1, jump_frame
+	j update_player_position
+
+end_jump:
+	sw $zero, player_x_velocity
+	sw $zero, player_y_velocity
+	sw $zero, jump_frame
+	li $t1, 2
+	sw $t1, player_state
+	j check_collisions
 
 a_pressed:
 	lw $t1, player_direction
@@ -240,6 +299,7 @@ check_right_foot:
 end_loop_check_collisions:
 	lw $t1, player_state
 	beq $t1, 1, erase_old_objects
+	beq $t1, 2, erase_old_objects
 	li $t2, 2
 	sw $t2, player_state
 	j erase_old_objects
@@ -421,10 +481,10 @@ draw_floor:
 	li $a2, GREEN_1
 	jal draw_platform_func
 	
-	li $a0, 12824
-	li $a1, 5
-	li $a2, GREEN_1
-	jal draw_platform_func
+	#li $a0, 12824
+	#li $a1, 5
+	#li $a2, GREEN_1
+	#jal draw_platform_func
 	
 init_level_return:
 	# Return to main
