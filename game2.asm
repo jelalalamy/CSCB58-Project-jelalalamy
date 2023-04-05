@@ -58,13 +58,17 @@ test_str: .asciiz "Something happened\n"
 loop_str: .asciiz "Sleeping then looping\n"
 
 # Player state
-player_x: .word 2	# ranges from 0-63
-player_y: .word 61	# ranges from 0-63
+player_x: .word 12	# ranges from 0-63
+player_y: .word 40	# ranges from 0-63
 player_x_velocity: .word 0
 player_y_velocity: .word 0
 player_direction: .word	1	# 0 for left, 1 for right
-player_state: .word 0	# 0 for on platform, 1 for jumping, 2 for falling
+player_state: .word 2	# 0 for on platform, 1 for jumping, 2 for falling
 jump_frame: .word 0
+
+# Platforms
+collision_pixels: .space 4096
+collision_pixels_len: .word 0
 
 ##################################################################### MAIN
 .text
@@ -118,26 +122,40 @@ check_user_input:
 	# If q was pressed, then quit immediately, otherwise continue to check_on_platform
 	beq $t3, 0x71, game_loop_return
 
-# Check if the player is on a platform
+# Check the player state (0 = on platform 1 = jumping, 2 = falling)
 check_player_state:
+	lw $t1, player_state
+	# Only allow inputs while on a platform
+	beq $t1, 0, on_platform
+	# If falling,
+	beq $t1, 2, falling
+
+on_platform:
+	li $t1, 0
+	sw $t1, player_x_velocity
+	sw $t1, player_y_velocity
+	j handle_inputs
+
+falling:
+	li $t1, 1
+	sw $t1, player_y_velocity
+	# For now set the player x velocity to 0, eventually we want to preserve velocity when falling after jumping
+	sw $zero, player_x_velocity
+	j update_player_position
 	
 # Update locations and stuff
-handle_inputs:
-	# Store player current position so we can erase it later (use $k0 and $k1 for now)
-	lw $k0, player_x
-	lw $k1, player_y
-	
+handle_inputs:	
 	# $t3 currently stores the key pressed
 	# Move using wasd
 	beq $t3, 0x61, a_pressed
 	beq $t3, 0x64, d_pressed
 	beq $t3, 0x6A, short_jump
-	j check_collisions
+	j update_player_position
 
 short_jump:
 	# For now a short jump will have 8 frames: up, right, up, right, right, down, right, down
 	# Move the player depending on the jump frame
-	j check_collisions
+	#j update_player_position
 
 a_pressed:
 	lw $t1, player_direction
@@ -146,9 +164,8 @@ a_pressed:
 	sw $t2, player_x_velocity
 	j update_player_position
 turn_left:
-	li $t2, 0
-	sw $t2, player_direction
-	sw $t2, player_x_velocity
+	sw $zero, player_direction
+	sw $zero, player_x_velocity
 	j update_player_position
 	
 d_pressed:
@@ -166,6 +183,10 @@ turn_right:
 	
 # Update player position based on velocity
 update_player_position:
+	# Store player current position so we can erase it later (use $k0 and $k1 for now)
+	lw $k0, player_x
+	lw $k1, player_y
+	
 	lw $t1, player_x
 	lw $t2, player_y
 	lw $t3, player_x_velocity
@@ -197,6 +218,35 @@ update_y_position:
 
 # Check for collisions
 check_collisions:
+	# loop through collision pixels and compare player_x +- 4
+	lw $t0, collision_pixels_len
+	li $t1, 0 # t1 is the index
+
+loop_check_collisions:
+	bge $t1, $t0, end_loop_check_collisions
+	lw $t4, collision_pixels($t1)
+	lw $t2, player_x
+	lw $a2, player_y
+check_left_foot:
+	add $a1, $t2, -1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_top
+check_right_foot:
+	add $a1, $t2, 1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_top
+	add $t1, $t1, 4
+	j loop_check_collisions
+end_loop_check_collisions:
+	lw $t1, player_state
+	beq $t1, 1, erase_old_objects
+	li $t2, 2
+	sw $t2, player_state
+	j erase_old_objects
+		
+collided_with_platform_top:
+	li $t1, 0
+	sw $t1, player_state
 
 # Update other game states (if needed)
 
@@ -244,6 +294,10 @@ game_loop_return:
 # $a1 - length
 # $a2 - colour
 draw_platform_func:
+	# $t1 will be used to store collision pixels
+	add $t1, $a0, -256
+	lw $t3, collision_pixels_len
+	
 	li $t0, BASE_ADDRESS
 	add $a0, $a0, $t0
 	# Compute the end position based on the length
@@ -252,7 +306,17 @@ draw_platform_func:
 
 loop_draw_platform:
 	bgt $a0, $a1, end_draw_platform
+	# Draw the platform
 	sw $a2, ($a0)
+	# Store the above pixel in collision_pixels
+	sw $t1, collision_pixels($t3)
+	li $t4, BLUE_1
+	add $t2, $t1, $t0
+	sw $t4, ($t2)
+	add $t1, $t1, 4
+	add $t3, $t3, 4
+	sw $t3, collision_pixels_len
+	# Loop
 	add $a0, $a0, 4
 	j loop_draw_platform
 
@@ -354,6 +418,11 @@ draw_floor:
 	# Use the draw_platform_func function
 	li $a0, 15872
 	li $a1, 63
+	li $a2, GREEN_1
+	jal draw_platform_func
+	
+	li $a0, 12824
+	li $a1, 5
 	li $a2, GREEN_1
 	jal draw_platform_func
 	
