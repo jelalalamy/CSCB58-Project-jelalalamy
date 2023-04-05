@@ -46,6 +46,7 @@
 .eqv RED_1 0xff0000
 .eqv GREEN_1 0x00ff00
 .eqv BLUE_1 0x0000ff
+.eqv BLUE_2 0x00b9ff
 .eqv BLACK 0x000000
 
 .data
@@ -57,7 +58,7 @@ test_str: .asciiz "Something happened\n"
 loop_str: .asciiz "Sleeping then looping\n"
 
 # Player state
-player_x: .word 0	# ranges from 0-63
+player_x: .word 2	# ranges from 0-63
 player_y: .word 61	# ranges from 0-63
 player_direction: .word	1	# 0 for left, 1 for right
 player_state: .word 0	# 0 for on platform, 1 for jumping, 2 for falling
@@ -141,7 +142,7 @@ short_jump:
 move_player_left:
 	lw $t1, player_x
 	# Do not move the player if they are at the right edge already
-	beq $t1, 0, check_collisions
+	beq $t1, 1, check_collisions
 	add $t1, $t1, -1
 	sw $t1, player_x
 	j check_collisions
@@ -149,7 +150,7 @@ move_player_left:
 move_player_right:
 	lw $t1, player_x
 	# Do not move the player if they are at the right edge already
-	beq $t1, 63, check_collisions
+	beq $t1, 62, check_collisions
 	add $t1, $t1, 1
 	sw $t1, player_x
 	j check_collisions
@@ -239,9 +240,35 @@ end_draw_platform:
 # $a0 - position (compute using compute_position_func, or just pass an immediate)
 draw_player_func:
 	li $t0, BASE_ADDRESS
-	li $t1, GREEN_1
+	li $t1, RED_1
+	li $t2, BLUE_2
 	add $a0, $a0, $t0
+	# Draw feet
+	add $t3, $a0, 4
+	sw $t1, ($t3)
+	add $t3, $a0, -4
+	sw $t1, ($t3)
+	# Draw lower body
+	add $a0, $a0, -256
 	sw $t1, ($a0)
+	add $t3, $a0, 4
+	sw $t1, ($t3)
+	add $t3, $a0, -4
+	sw $t1, ($t3)
+	# Draw middle body
+	add $a0, $a0, -256
+	sw $t2, ($a0)
+	add $t3, $a0, 4
+	sw $t2, ($t3)
+	add $t3, $a0, -4
+	sw $t1, ($t3)
+	# Draw upper body
+	add $a0, $a0, -256
+	sw $t1, ($a0)
+	add $t3, $a0, 4
+	sw $t1, ($t3)
+	add $t3, $a0, -4
+	sw $t1, ($t3)	
 	jr $ra
 	
 # Helper function to erase the player (usually their previous location)
@@ -251,8 +278,32 @@ erase_player_func:
 	li $t0, BASE_ADDRESS
 	li $t1, BLACK
 	add $a0, $a0, $t0
+	# Erase feet
+	add $t3, $a0, 4
+	sw $t1, ($t3)
+	add $t3, $a0, -4
+	sw $t1, ($t3)
+	# Erase lower body
+	add $a0, $a0, -256
 	sw $t1, ($a0)
-	jr $ra
+	add $t3, $a0, 4
+	sw $t1, ($t3)
+	add $t3, $a0, -4
+	sw $t1, ($t3)
+	# Erase middle body
+	add $a0, $a0, -256
+	sw $t1, ($a0)
+	add $t3, $a0, 4
+	sw $t1, ($t3)
+	add $t3, $a0, -4
+	sw $t1, ($t3)
+	# Erase upper body
+	add $a0, $a0, -256
+	sw $t1, ($a0)
+	add $t3, $a0, 4
+	sw $t1, ($t3)
+	add $t3, $a0, -4
+	sw $t1, ($t3)	
 
 # Function to draw the inital level (platforms and stuff)
 # No parameters or return 
@@ -268,7 +319,7 @@ draw_floor:
 	# Use the draw_platform_func function
 	li $a0, 15872
 	li $a1, 63
-	li $a2, RED_1
+	li $a2, GREEN_1
 	jal draw_platform_func
 	
 init_level_return:
