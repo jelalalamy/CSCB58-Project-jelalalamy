@@ -60,6 +60,8 @@ loop_str: .asciiz "Sleeping then looping\n"
 # Player state
 player_x: .word 2	# ranges from 0-63
 player_y: .word 61	# ranges from 0-63
+player_x_velocity: .word 0
+player_y_velocity: .word 0
 player_direction: .word	1	# 0 for left, 1 for right
 player_state: .word 0	# 0 for on platform, 1 for jumping, 2 for falling
 jump_frame: .word 0
@@ -120,17 +122,15 @@ check_user_input:
 check_player_state:
 	
 # Update locations and stuff
-update_player_position:
+handle_inputs:
 	# Store player current position so we can erase it later (use $k0 and $k1 for now)
 	lw $k0, player_x
 	lw $k1, player_y
 	
 	# $t3 currently stores the key pressed
 	# Move using wasd
-	beq $t3, 0x61, move_player_left
-	beq $t3, 0x64, move_player_right
-	beq $t3, 0x77, move_player_up
-	beq $t3, 0x73, move_player_down
+	beq $t3, 0x61, a_pressed
+	beq $t3, 0x64, d_pressed
 	beq $t3, 0x6A, short_jump
 	j check_collisions
 
@@ -139,37 +139,61 @@ short_jump:
 	# Move the player depending on the jump frame
 	j check_collisions
 
-move_player_left:
-	lw $t1, player_x
-	# Do not move the player if they are at the right edge already
-	beq $t1, 1, check_collisions
-	add $t1, $t1, -1
-	sw $t1, player_x
-	j check_collisions
+a_pressed:
+	lw $t1, player_direction
+	beq $t1, 1, turn_left
+	li $t2, -1
+	sw $t2, player_x_velocity
+	j update_player_position
+turn_left:
+	li $t2, 0
+	sw $t2, player_direction
+	sw $t2, player_x_velocity
+	j update_player_position
 	
-move_player_right:
-	lw $t1, player_x
-	# Do not move the player if they are at the right edge already
-	beq $t1, 62, check_collisions
-	add $t1, $t1, 1
-	sw $t1, player_x
-	j check_collisions
+d_pressed:
+	lw $t1, player_direction
+	beq $t1, 0, turn_right
+	li $t2, 1
+	sw $t2, player_x_velocity
+	j update_player_position
+turn_right:
+	li $t2, 1
+	sw $t2, player_direction
+	li $t2, 0
+	sw $t2, player_x_velocity
+	j update_player_position
 	
-move_player_up:
-	lw $t1, player_y
-	# Do not move the player if they are at the right edge already
-	beq $t1, 0, check_collisions
-	add $t1, $t1, -1
-	sw $t1, player_y
-	j check_collisions
-
-move_player_down:
-	lw $t1, player_y
-	# Do not move the player if they are at the right edge already
-	beq $t1, 63, check_collisions
-	add $t1, $t1, 1
-	sw $t1, player_y
-	j check_collisions
+# Update player position based on velocity
+update_player_position:
+	lw $t1, player_x
+	lw $t2, player_y
+	lw $t3, player_x_velocity
+	lw $t4, player_y_velocity
+update_x:
+	add $t1, $t1, $t3
+	bge $t1, 62, hit_right_edge
+	ble $t1, 1, hit_left_edge
+	j update_x_position
+hit_right_edge:
+	li $t1, 62
+	j update_x_position
+hit_left_edge:
+	li $t1, 1
+update_x_position:
+	sw $t1, player_x
+update_y:
+	add $t2, $t2, $t4
+	bge $t2, 63, hit_bottom_edge
+	ble $t2, 3, hit_top_edge
+	j update_y_position
+hit_bottom_edge:
+	li $t2, 63
+	j update_y_position
+hit_top_edge:
+	li $t2, 3
+update_y_position:
+	sw $t2, player_y
 
 # Check for collisions
 check_collisions:
@@ -256,12 +280,23 @@ draw_player_func:
 	add $t3, $a0, -4
 	sw $t1, ($t3)
 	# Draw middle body
+	lw $t4, player_direction
+	beq $t4, 0, draw_upper_left
 	add $a0, $a0, -256
 	sw $t2, ($a0)
 	add $t3, $a0, 4
 	sw $t2, ($t3)
 	add $t3, $a0, -4
 	sw $t1, ($t3)
+	j draw_upper_body
+draw_upper_left:
+	add $a0, $a0, -256
+	sw $t2, ($a0)
+	add $t3, $a0, 4
+	sw $t1, ($t3)
+	add $t3, $a0, -4
+	sw $t2, ($t3)	
+draw_upper_body:
 	# Draw upper body
 	add $a0, $a0, -256
 	sw $t1, ($a0)
