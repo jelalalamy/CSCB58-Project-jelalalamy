@@ -65,7 +65,7 @@ player_y_velocity: .word 0
 player_direction: .word	1	# 0 for left, 1 for right
 player_state: .word 2	# 0 for on platform, 1 for jumping, 2 for falling
 jump_frame: .word 0
-jump_type: .word 0	# 0 for short, 1 for mid, 2 for long
+jump_type: .word 0	# 0 for short, 1 for mid, 2 for long, 3 for high
 
 # Platforms
 collision_pixels: .space 4096
@@ -134,9 +134,8 @@ check_player_state:
 	beq $t1, 2, falling
 
 on_platform:
-	li $t1, 0
-	sw $t1, player_x_velocity
-	sw $t1, player_y_velocity
+	sw $zero, player_x_velocity
+	sw $zero, player_y_velocity
 	j handle_inputs
 
 falling:
@@ -157,6 +156,7 @@ handle_inputs:
 	beq $t3, 0x61, a_pressed
 	beq $t3, 0x64, d_pressed
 	beq $t3, 0x6A, start_short_jump
+	beq $t3, 0x20, start_high_jump
 	j update_player_position
 
 start_short_jump:
@@ -164,6 +164,12 @@ start_short_jump:
 	li $t1, 1
 	sw $t1, player_state
 	j short_jump
+	
+start_high_jump:
+	sw $zero, jump_frame
+	li $t1, 1
+	sw $t1, player_state
+	j high_jump
 
 short_jump:
 	lw $t1, player_direction
@@ -199,8 +205,83 @@ short_jump_right_2:
 	sw $t1, player_y_velocity
 	j update_jump_frame
 	
-
 short_jump_left:
+	lw $t1, jump_frame
+	beq $t1, 0, short_jump_left_0
+	beq $t1, 1, short_jump_left_0
+	beq $t1, 2, short_jump_left_1
+	beq $t1, 3, short_jump_left_1
+	beq $t1, 4, short_jump_left_2
+	beq $t1, 5, short_jump_left_2
+	beq $t1, 6, end_jump
+	
+short_jump_left_0:
+	li $t1, -1
+	sw $t1, player_x_velocity
+	sw $t1, player_y_velocity
+	j update_jump_frame
+	
+short_jump_left_1:
+	li $t1, -1
+	sw $t1, player_x_velocity
+	sw $zero, player_y_velocity
+	j update_jump_frame
+	
+short_jump_left_2:
+	li $t1, -1
+	li $t2, 1
+	sw $t1, player_x_velocity
+	sw $t2, player_y_velocity
+	j update_jump_frame
+
+high_jump:
+	lw $t1, player_direction
+	beq $t1, 0, high_jump_left
+	beq $t1, 1, high_jump_right
+
+high_jump_right:
+	lw $t1, jump_frame
+	beq $t1, 0, high_jump_right_0
+	beq $t1, 1, high_jump_right_0
+	beq $t1, 2, high_jump_right_1
+	beq $t1, 3, high_jump_right_1
+	beq $t1, 4, end_jump
+	
+high_jump_right_0:
+	li $t1, 1
+	li $t2, -4
+	sw $t1, player_x_velocity
+	sw $t2, player_y_velocity
+	j update_jump_frame
+	
+high_jump_right_1:
+	li $t1, 1
+	li $t2, 4
+	sw $t1, player_x_velocity
+	sw $t2, player_y_velocity
+	j update_jump_frame
+	
+high_jump_left:
+	lw $t1, jump_frame
+	beq $t1, 0, high_jump_left_0
+	beq $t1, 1, high_jump_left_0
+	beq $t1, 2, high_jump_left_1
+	beq $t1, 3, high_jump_left_1
+	beq $t1, 4, end_jump
+	
+high_jump_left_0:
+	li $t1, -1
+	li $t2, -4
+	sw $t1, player_x_velocity
+	sw $t2, player_y_velocity
+	j update_jump_frame
+	
+high_jump_left_1:
+	li $t1, -1
+	li $t2, 4
+	sw $t1, player_x_velocity
+	sw $t2, player_y_velocity
+	j update_jump_frame
 
 update_jump_frame:
 	lw $t1, jump_frame
@@ -370,9 +451,9 @@ loop_draw_platform:
 	sw $a2, ($a0)
 	# Store the above pixel in collision_pixels
 	sw $t1, collision_pixels($t3)
-	li $t4, BLUE_1
-	add $t2, $t1, $t0
-	sw $t4, ($t2)
+	#li $t4, BLUE_1
+	#add $t2, $t1, $t0
+	#sw $t4, ($t2)
 	add $t1, $t1, 4
 	add $t3, $t3, 4
 	sw $t3, collision_pixels_len
@@ -382,6 +463,8 @@ loop_draw_platform:
 
 end_draw_platform:
 	jr $ra
+	
+# Helper function to draw
 	
 # Helper function to draw the player
 # Parameters:
@@ -474,17 +557,22 @@ init_level_func:
 # Draw floor
 draw_floor:
 	li $t0, BASE_ADDRESS 		
-	# We want to draw the floor at y=62 with a length of 63 (the entire row)
+	# We want to draw the floor at y=126 with a length of 63 (the entire row)
 	# Use the draw_platform_func function
 	li $a0, 15872
 	li $a1, 63
 	li $a2, GREEN_1
 	jal draw_platform_func
 	
-	#li $a0, 12824
-	#li $a1, 5
-	#li $a2, GREEN_1
-	#jal draw_platform_func
+	li $a0, 15776
+	li $a1, 5
+	li $a2, GREEN_1
+	jal draw_platform_func
+	
+	li $a0, 14712
+	li $a1, 5
+	li $a2, GREEN_1
+	jal draw_platform_func
 	
 init_level_return:
 	# Return to main
