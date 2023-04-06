@@ -44,9 +44,12 @@
 .eqv WAIT_TIME 40
 .eqv JUMP_HEIGHT 6
 .eqv RED_1 0xff0000
-.eqv GREEN_1 0x00ff00
+.eqv ORANGE_1 0xF39C12
+.eqv GREEN_1 0x229954
+.eqv GREEN_2 0xA3EB41
 .eqv BLUE_1 0x0000ff
 .eqv BLUE_2 0x00b9ff
+.eqv PURPLE_1 0x3F48CC
 .eqv BLACK 0x000000
 
 .data
@@ -58,8 +61,8 @@ test_str: .asciiz "Something happened\n"
 loop_str: .asciiz "Sleeping then looping\n"
 
 # Player state
-player_x: .word 12	# ranges from 0-63
-player_y: .word 40	# ranges from 0-63
+player_x: .word 5	# ranges from 0-63
+player_y: .word 90	# ranges from 0-63
 player_x_velocity: .word 0
 player_y_velocity: .word 0
 player_direction: .word	1	# 0 for left, 1 for right
@@ -345,11 +348,11 @@ update_x_position:
 	sw $t1, player_x
 update_y:
 	add $t2, $t2, $t4
-	bge $t2, 63, hit_bottom_edge
+	bge $t2, 127, hit_bottom_edge
 	ble $t2, 3, hit_top_edge
 	j update_y_position
 hit_bottom_edge:
-	li $t2, 63
+	li $t2, 127
 	j update_y_position
 hit_top_edge:
 	li $t2, 3
@@ -358,6 +361,21 @@ update_y_position:
 
 # Check for collisions
 check_collisions:
+
+#check_portal_collisions:
+#	lw $a1, player_x
+#	lw $a2, player_y
+#	jal compute_position_func
+#	beq $a0, 29384, red_tp
+#	j check_platform_collisions
+	
+#red_tp:
+#	li $t1, 10
+#	li $t2, 105
+#	sw $t1, player_x
+#	sw $t2, player_y
+
+check_platform_collisions:
 	# loop through collision pixels and compare player_x +- 4
 	lw $t0, collision_pixels_len
 	li $t1, 0 # t1 is the index
@@ -413,9 +431,9 @@ draw_new_player:
 	
 # Sleep and loop
 sleep_and_loop:
-	li $v0, 4
-	la $a0, loop_str
-	syscall
+	#li $v0, 4
+	#la $a0, loop_str
+	#syscall
 	
 	li $v0, 32
 	li $a0, WAIT_TIME
@@ -559,19 +577,66 @@ draw_floor:
 	li $t0, BASE_ADDRESS 		
 	# We want to draw the floor at y=126 with a length of 63 (the entire row)
 	# Use the draw_platform_func function
-	li $a0, 15872
+	li $a0, 25600
 	li $a1, 63
 	li $a2, GREEN_1
 	jal draw_platform_func
 	
-	li $a0, 15776
-	li $a1, 5
-	li $a2, GREEN_1
+draw_platforms:
+	
+	sw $a2, 29384($t0)
+	
+draw_amongus:
+	li $t0, BASE_ADDRESS
+	li $t6, PURPLE_1
+	li $t7, BLUE_2
+	# Purple amongus on floor
+	sw $t6, 25396($t0)
+	sw $t6, 25140($t0)
+	li $a0, 24884
+	li $a1, 0
+	li $a2, PURPLE_1
+	jal draw_platform_func
+	sw $t6, 25400($t0)
+	sw $t7, 25144($t0)
+	li $a0, 24888
+	li $a1, 0
+	li $a2, BLUE_2
+	jal draw_platform_func
+	sw $t6, 25404($t0)
+	sw $t6, 25148($t0)
+	li $a0, 24892
+	li $a1, 1
+	li $a2, PURPLE_1
+	jal draw_platform_func
+	sw $t6, 25408($t0)
+	
+	# Orange amongus on floor
+	li $t6, ORANGE_1
+	sw $t6, 25464($t0)
+	sw $t6, 25468($t0)
+	sw $t7, 25472($t0)
+	sw $t6, 25476($t0)
+	sw $t6, 25212($t0)
+	sw $t7, 25216($t0)
+	sw $t6, 25220($t0)
+	li $a0, 24952
+	li $a1, 3
+	li $a2, ORANGE_1
 	jal draw_platform_func
 	
-	li $a0, 14712
-	li $a1, 5
-	li $a2, GREEN_1
+	# Green amongus on floor
+	li $t6, GREEN_2
+	sw $t6, 25588($t0)
+	sw $t6, 25592($t0)
+	sw $t6, 25596($t0)
+	sw $t6, 25336($t0)
+	sw $t6, 25340($t0)
+	sw $t7, 25080($t0)
+	sw $t6, 25084($t0)
+	li $a0, 24824
+	li $a1, 1
+	li $a2, GREEN_2
 	jal draw_platform_func
 	
 init_level_return:
