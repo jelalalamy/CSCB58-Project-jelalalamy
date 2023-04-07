@@ -56,6 +56,7 @@
 # Strings
 start_str: .asciiz "Game started\n"
 end_str: .asciiz "Game finished\n"
+init_level_str: .asciiz "Initializing level\n"
 pressed_q: .asciiz "Pressed q - ending game\n"
 test_str: .asciiz "Something happened\n"
 loop_str: .asciiz "Sleeping then looping\n"
@@ -66,13 +67,22 @@ player_y: .word 90	# ranges from 0-63
 player_x_velocity: .word 0
 player_y_velocity: .word 0
 player_direction: .word	1	# 0 for left, 1 for right
-player_state: .word 2	# 0 for on platform, 1 for jumping, 2 for falling
+player_state: .word 2		# 0 for on platform, 1 for jumping, 2 for falling
+player_collided_right: .word 0	# 0 if colliding with right side of a platform, 1 otherwise
+player_collided_left: .word 0
+player_collided_bottom: .word 0
 jump_frame: .word 0
 jump_type: .word 0	# 0 for short, 1 for mid, 2 for long, 3 for high
 
-# Platforms
-collision_pixels: .space 4096
-collision_pixels_len: .word 0
+# Collision pixels
+top_collision_pixels: .space 4096
+top_collision_pixels_len: .word 0
+left_collision_pixels: .space 4096
+left_collision_pixels_len: .word 0
+right_collision_pixels: .space 4096
+right_collision_pixels_len: .word 0
+bottom_collision_pixels: .space 4096
+bottom_collision_pixels_len: .word 0
 
 ##################################################################### MAIN
 .text
@@ -334,6 +344,20 @@ update_player_position:
 	lw $t2, player_y
 	lw $t3, player_x_velocity
 	lw $t4, player_y_velocity
+	# Check if player is colliding with a platform
+	lw $t5, player_collided_right
+	beq $t5, 1, update_right_collision
+	lw $t5, player_collided_left
+	beq $t5, 1, update_left_collision
+	j update_x
+update_right_collision:
+	ble $t3, 0, update_x
+	li $t3, 0
+	j update_x
+update_left_collision:
+	bge $t3, 0, update_x
+	li $t3, 0
+	j update_x
 update_x:
 	add $t1, $t1, $t3
 	bge $t1, 62, hit_right_edge
@@ -348,6 +372,9 @@ update_x_position:
 	sw $t1, player_x
 update_y:
 	add $t2, $t2, $t4
+	# Handling collision with the bottom of a platform is different from the right/left
+	lw $t5, player_collided_bottom
+	beq $t5, 1, hit_platform_bottom
 	bge $t2, 127, hit_bottom_edge
 	ble $t2, 3, hit_top_edge
 	j update_y_position
@@ -356,6 +383,9 @@ hit_bottom_edge:
 	j update_y_position
 hit_top_edge:
 	li $t2, 3
+	j update_y_position
+hit_platform_bottom:
+	lw $t2, player_y
 update_y_position:
 	sw $t2, player_y
 
@@ -375,14 +405,119 @@ check_collisions:
 #	sw $t1, player_x
 #	sw $t2, player_y
 
+# Checking collision on the right side of the player
+check_right_collisions:
+	lw $t0, left_collision_pixels_len
+	li $t1, 0
+	
+loop_check_right_collisions:
+	bge $t1, $t0, end_loop_check_right_collisions
+	lw $t4, left_collision_pixels($t1)
+	lw $a1, player_x
+	lw $a2, player_y
+check_right_body:
+	add $a1, $a1, 1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_right
+	add $a2, $a2, -1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_right
+	add $a2, $a2, -1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_right
+	add $a2, $a2, -1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_right
+	add $t1, $t1, 4
+	j loop_check_right_collisions
+	
+end_loop_check_right_collisions:
+	li $t1, 1
+	sw $zero, player_collided_right
+	j check_left_collisions
+	
+collided_with_platform_right:
+	li $t1, 1
+	sw $t1, player_collided_right
+	
+# Checking collisions on the left side of the player
+check_left_collisions:
+	lw $t0, right_collision_pixels_len
+	li $t1, 0
+	
+loop_check_left_collisions:
+	bge $t1, $t0, end_loop_check_left_collisions
+	lw $t4, right_collision_pixels($t1)
+	lw $a1, player_x
+	lw $a2, player_y
+check_left_body:
+	add $a1, $a1, -1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_left
+	add $a2, $a2, -1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_left
+	add $a2, $a2, -1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_left
+	add $a2, $a2, -1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_left
+	add $t1, $t1, 4
+	j loop_check_left_collisions
+	
+end_loop_check_left_collisions:
+	li $t1, 1
+	sw $zero, player_collided_left
+	j check_bottom_collisions
+	
+collided_with_platform_left:
+	li $t1, 1
+	sw $t1, player_collided_left
+	
+# Checking collisions with the bottom of a platform
+check_bottom_collisions:
+	lw $t0, bottom_collision_pixels_len
+	li $t1, 0
+	
+loop_check_bottom_collisions:
+	bge $t1, $t0, end_loop_check_bottom_collisions
+	lw $t4, bottom_collision_pixels($t1)
+	lw $a1, player_x
+	lw $a2, player_y
+check_top_body:
+	add $a2, $a2, -3
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_bottom
+	add $a1, $a1, -1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_bottom
+	add $a1, $a1, 1
+	jal compute_position_func
+	beq $a0, $t4, collided_with_platform_bottom
+	add $t1, $t1, 4
+	j loop_check_bottom_collisions
+	
+end_loop_check_bottom_collisions:
+	sw $zero, player_collided_bottom
+	j check_platform_collisions
+	
+collided_with_platform_bottom:
+	li $v0, 4
+	la $a0, test_str
+	syscall
+	li $t1, 1
+	sw $t1, player_collided_bottom
+
+# Checking collisions with the top of a platform
 check_platform_collisions:
 	# loop through collision pixels and compare player_x +- 4
-	lw $t0, collision_pixels_len
+	lw $t0, top_collision_pixels_len
 	li $t1, 0 # t1 is the index
 
 loop_check_collisions:
 	bge $t1, $t0, end_loop_check_collisions
-	lw $t4, collision_pixels($t1)
+	lw $t4, top_collision_pixels($t1)
 	lw $t2, player_x
 	lw $a2, player_y
 check_left_foot:
@@ -454,35 +589,52 @@ game_loop_return:
 # $a2 - colour
 draw_platform_func:
 	# $t1 will be used to store collision pixels
+	# Add left collision pixel
+	add $t1, $a0, -4
+	lw $t3, left_collision_pixels_len
+	sw $t1, left_collision_pixels($t3)
+	add $t3, $t3, 4
+	sw $t3, left_collision_pixels_len
+	
+	# Add right collision pixel
+	mul $a1, $a1, 4
+	add $t1, $a0, $a1
+	add $t1, $t1, 4
+	lw $t3, right_collision_pixels_len
+	sw $t1, right_collision_pixels($t3)
+	add $t3, $t3, 4
+	sw $t3, right_collision_pixels_len
+	
 	add $t1, $a0, -256
-	lw $t3, collision_pixels_len
+	add $t2, $a0, 256
+	lw $t3, top_collision_pixels_len
+	lw $t4, bottom_collision_pixels_len
 	
 	li $t0, BASE_ADDRESS
 	add $a0, $a0, $t0
 	# Compute the end position based on the length
-	mul $a1, $a1, 4
 	add $a1, $a1, $a0
 
 loop_draw_platform:
 	bgt $a0, $a1, end_draw_platform
 	# Draw the platform
 	sw $a2, ($a0)
-	# Store the above pixel in collision_pixels
-	sw $t1, collision_pixels($t3)
-	#li $t4, BLUE_1
-	#add $t2, $t1, $t0
-	#sw $t4, ($t2)
+	# Store the above pixel in top_collision_pixels
+	sw $t1, top_collision_pixels($t3)
+	# Store the below pixel in bottom_collision_pixels
+	sw $t2, bottom_collision_pixels($t4)
 	add $t1, $t1, 4
+	add $t2, $t2, 4
 	add $t3, $t3, 4
-	sw $t3, collision_pixels_len
+	add $t4, $t4, 4
+	sw $t3, top_collision_pixels_len
+	sw $t4, bottom_collision_pixels_len
 	# Loop
 	add $a0, $a0, 4
 	j loop_draw_platform
 
 end_draw_platform:
 	jr $ra
-	
-# Helper function to draw
 	
 # Helper function to draw the player
 # Parameters:
@@ -563,12 +715,17 @@ erase_player_func:
 	add $t3, $a0, 4
 	sw $t1, ($t3)
 	add $t3, $a0, -4
-	sw $t1, ($t3)	
+	sw $t1, ($t3)
+	jr $ra	
 
 # Function to draw the inital level (platforms and stuff)
 # No parameters or return 
 init_level_func:
 	# Store $ra on the stack since we'll be calling the compute position function
+	li $v0, 4
+	la $a0, init_level_str
+	syscall	
+
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
 	
@@ -577,14 +734,20 @@ draw_floor:
 	li $t0, BASE_ADDRESS 		
 	# We want to draw the floor at y=126 with a length of 63 (the entire row)
 	# Use the draw_platform_func function
-	li $a0, 25600
-	li $a1, 63
+	li $a0, 25604
+	li $a1, 61
 	li $a2, GREEN_1
 	jal draw_platform_func
+	sw $a2 25600($t0)
+	sw $a2 25852($t0)
 	
 draw_platforms:
 	
-	sw $a2, 29384($t0)
+	li $a0, 24472
+	li $a1, 5
+	li $a2, GREEN_1
+	jal draw_platform_func
+	#sw $a2, 29384($t0)
 	
 draw_amongus:
 	li $t0, BASE_ADDRESS
@@ -627,14 +790,19 @@ draw_amongus:
 	
 	# Green amongus on floor
 	li $t6, GREEN_2
-	sw $t6, 25588($t0)
-	sw $t6, 25592($t0)
+	li $a0, 25584
+	li $a1, 2
+	li $a2, GREEN_2
+	jal draw_platform_func
 	sw $t6, 25596($t0)
+	sw $t6, 25332($t0)
 	sw $t6, 25336($t0)
 	sw $t6, 25340($t0)
+	sw $t7, 25076($t0)
 	sw $t7, 25080($t0)
 	sw $t6, 25084($t0)
-	li $a0, 24824
+	sw $t6, 24828($t0)
+	li $a0, 24820
 	li $a1, 1
 	li $a2, GREEN_2
 	jal draw_platform_func
