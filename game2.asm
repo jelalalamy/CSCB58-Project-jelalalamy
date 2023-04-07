@@ -45,6 +45,7 @@
 .eqv JUMP_HEIGHT 6
 .eqv RED_1 0xff0000
 .eqv ORANGE_1 0xF39C12
+.eqv YELLOW_1 0xF4D03F 
 .eqv GREEN_1 0x229954
 .eqv GREEN_2 0xA3EB41
 .eqv BLUE_1 0x0000ff
@@ -83,6 +84,9 @@ right_collision_pixels: .space 4096
 right_collision_pixels_len: .word 0
 bottom_collision_pixels: .space 4096
 bottom_collision_pixels_len: .word 0
+
+# Misc
+redraw_red_tp: .word 0
 
 ##################################################################### MAIN
 .text
@@ -392,18 +396,21 @@ update_y_position:
 # Check for collisions
 check_collisions:
 
-#check_portal_collisions:
-#	lw $a1, player_x
-#	lw $a2, player_y
-#	jal compute_position_func
-#	beq $a0, 29384, red_tp
-#	j check_platform_collisions
+check_portal_collisions:
+	lw $a1, player_x
+	lw $a2, player_y
+	add $a2, $a2, -1
+	jal compute_position_func
+	beq $a0, 24020, red_tp
+	j check_right_collisions
 	
-#red_tp:
-#	li $t1, 10
-#	li $t2, 105
-#	sw $t1, player_x
-#	sw $t2, player_y
+red_tp:
+	li $t1, 4
+	li $t2, 84
+	sw $t1, player_x
+	sw $t2, player_y
+	li $t1, 1
+	sw $t1, redraw_red_tp
 
 # Checking collision on the right side of the player
 check_right_collisions:
@@ -503,9 +510,6 @@ end_loop_check_bottom_collisions:
 	j check_platform_collisions
 	
 collided_with_platform_bottom:
-	li $v0, 4
-	la $a0, test_str
-	syscall
 	li $t1, 1
 	sw $t1, player_collided_bottom
 
@@ -555,6 +559,21 @@ erase_old_objects:
 	
 # Draw new objects
 draw_new_objects:
+	lw $t1, redraw_red_tp
+	beq $t1, 1, draw_red_tp
+	j draw_new_player
+	
+draw_red_tp:
+	li $a0, 24532
+	li $a1, RED_1
+	li $a2, ORANGE_1
+	li $a3, YELLOW_1
+	jal draw_portal_func
+	li $t1, GREEN_1
+	li $t0, BASE_ADDRESS
+	sw $t1, 24532($t0)
+	sw $zero, redraw_red_tp
+	
 # Draw player in the new position
 draw_new_player:
 	# Compute their position and then call draw_player_func
@@ -634,6 +653,58 @@ loop_draw_platform:
 	j loop_draw_platform
 
 end_draw_platform:
+	jr $ra
+	
+# Helper function to draw portals
+# Parameters:
+# $a0 - position of bottom middle pixel
+# $a1 - first colour
+# $a2 - second colour
+# $a3 - third colour
+draw_portal_func:
+	li $t0, BASE_ADDRESS
+	# First level
+	add $a0, $a0, $t0
+	sw $a1, ($a0)
+	# Second level
+	add $a0, $a0, -256
+	sw $a2, ($a0)
+	add $t1, $a0, 4
+	sw $a1, ($t1)
+	add $t1, $a0, -4
+	sw $a1, ($t1)
+	# Third level
+	add $a0, $a0, -256
+	sw $a3, ($a0)
+	add $t1, $a0, 4
+	sw $a2, ($t1)
+	add $t1, $t1, 4
+	sw $a1, ($t1)
+	add $t1, $a0, -4
+	sw $a2, ($t1)
+	add $t1, $t1, -4
+	sw $a1, ($t1)
+	# Fourth level
+	add $a0, $a0, -256
+	sw $a3, ($a0)
+	add $t1, $a0, 4
+	sw $a2, ($t1)
+	add $t1, $t1, 4
+	sw $a1, ($t1)
+	add $t1, $a0, -4
+	sw $a2, ($t1)
+	add $t1, $t1, -4
+	sw $a1, ($t1)
+	# Fifth level
+	add $a0, $a0, -256
+	sw $a2, ($a0)
+	add $t1, $a0, 4
+	sw $a1, ($t1)
+	add $t1, $a0, -4
+	sw $a1, ($t1)
+	# Sixth level
+	add $a0, $a0, -256
+	sw $a1, ($a0)
 	jr $ra
 	
 # Helper function to draw the player
@@ -741,11 +812,27 @@ draw_floor:
 	sw $a2 25600($t0)
 	sw $a2 25852($t0)
 	
+# Draw portals
+draw_portals:
+	li $a0, 24532
+	li $a1, RED_1
+	li $a2, ORANGE_1
+	li $a3, YELLOW_1
+	jal draw_portal_func
+
+	#sw $t1, 24532($t0)
+	#sw $t1, 21520($t0)
+
+# Draw platforms	
 draw_platforms:
 	
-	li $a0, 24472
-	li $a1, 5
+	li $a0, 24524
+	li $a1, 4
 	li $a2, GREEN_1
+	jal draw_platform_func
+	li $a0, 22024
+	li $a1, 4
+	li $a2, ORANGE_1
 	jal draw_platform_func
 	#sw $a2, 29384($t0)
 	
