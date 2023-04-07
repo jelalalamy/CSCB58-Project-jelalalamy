@@ -165,7 +165,8 @@ falling:
 jumping:
 	lw $t1, jump_type
 	beq $t1, 0, short_jump
-	#beq $t1, 1, mid_jump
+	beq $t1, 1, mid_jump
+	beq $t1, 2, long_jump
 	beq $t1, 3, high_jump
 			
 # Update locations and stuff
@@ -175,6 +176,8 @@ handle_inputs:
 	beq $t3, 0x61, a_pressed
 	beq $t3, 0x64, d_pressed
 	beq $t3, 0x6A, start_short_jump
+	beq $t3, 0x6B, start_mid_jump
+	beq $t3, 0x6C, start_long_jump
 	beq $t3, 0x20, start_high_jump
 	j update_player_position
 
@@ -185,6 +188,22 @@ start_short_jump:
 	sw $zero, jump_type
 	j short_jump
 	
+start_mid_jump:
+	sw $zero, jump_frame
+	li $t1, 1
+	sw $t1, player_state
+	li $t1, 1
+	sw $t1, jump_type
+	j mid_jump
+	
+start_long_jump:
+	sw $zero, jump_frame
+	li $t1, 1
+	sw $t1, player_state
+	li $t1, 2
+	sw $t1, jump_type
+	j long_jump
+	
 start_high_jump:
 	sw $zero, jump_frame
 	li $t1, 1
@@ -192,10 +211,6 @@ start_high_jump:
 	li $t1, 3
 	sw $t1, jump_type
 	j high_jump
-	
-#start_mid_jump:
-#	sw $zero, jump_frame
-#	li $t1, 1
 
 short_jump:
 	lw $t1, player_direction
@@ -259,6 +274,156 @@ short_jump_left_2:
 	sw $t1, player_x_velocity
 	sw $t2, player_y_velocity
 	j update_jump_frame
+	
+mid_jump:
+	lw $t1, player_direction
+	beq $t1, 0, mid_jump_left
+	beq $t1, 1, mid_jump_right
+
+mid_jump_right:
+	lw $t1, jump_frame
+	beq $t1, 0, mid_jump_right_0
+	beq $t1, 1, mid_jump_right_0
+	beq $t1, 2, mid_jump_right_0
+	beq $t1, 3, mid_jump_right_1
+	beq $t1, 4, mid_jump_right_1
+	beq $t1, 5, mid_jump_right_1
+	beq $t1, 6, mid_jump_right_1
+	beq $t1, 7, mid_jump_right_2
+	beq $t1, 8, mid_jump_right_2
+	beq $t1, 9, mid_jump_right_2
+	beq $t1, 10, end_jump
+	
+mid_jump_right_0:
+	li $t1, 1
+	li $t2, -1
+	sw $t1, player_x_velocity
+	sw $t2, player_y_velocity
+	j update_jump_frame
+	
+mid_jump_right_1:
+	li $t1, 1
+	sw $t1, player_x_velocity
+	sw $zero, player_y_velocity
+	j update_jump_frame
+	
+mid_jump_right_2:
+	li $t1, 1
+	sw $t1, player_x_velocity
+	sw $t1, player_y_velocity
+	j update_jump_frame
+	
+mid_jump_left:
+	lw $t1, jump_frame
+	beq $t1, 0, mid_jump_left_0
+	beq $t1, 1, mid_jump_left_0
+	beq $t1, 2, mid_jump_left_0
+	beq $t1, 3, mid_jump_left_1
+	beq $t1, 4, mid_jump_left_1
+	beq $t1, 5, mid_jump_left_1
+	beq $t1, 6, mid_jump_left_1
+	beq $t1, 7, mid_jump_left_2
+	beq $t1, 8, mid_jump_left_2
+	beq $t1, 9, mid_jump_left_2
+	beq $t1, 10, end_jump
+	
+mid_jump_left_0:
+	li $t1, -1
+	sw $t1, player_x_velocity
+	sw $t1, player_y_velocity
+	j update_jump_frame
+	
+mid_jump_left_1:
+	li $t1, -1
+	sw $t1, player_x_velocity
+	sw $zero, player_y_velocity
+	j update_jump_frame
+	
+mid_jump_left_2:
+	li $t1, -1
+	li $t2, 1
+	sw $t1, player_x_velocity
+	sw $t2, player_y_velocity
+	j update_jump_frame
+	
+long_jump:
+	lw $t1, player_direction
+	beq $t1, 0, long_jump_left
+	beq $t1, 1, long_jump_right
+
+long_jump_right:
+	lw $t1, jump_frame
+	beq $t1, 0, long_jump_right_0
+	beq $t1, 1, long_jump_right_0
+	beq $t1, 2, long_jump_right_0
+	beq $t1, 3, long_jump_right_0
+	beq $t1, 4, long_jump_right_1
+	beq $t1, 5, long_jump_right_1
+	beq $t1, 6, long_jump_right_1
+	beq $t1, 7, long_jump_right_1
+	beq $t1, 8, long_jump_right_1
+	beq $t1, 9, long_jump_right_1
+	beq $t1, 10, long_jump_right_2
+	beq $t1, 11, long_jump_right_2
+	beq $t1, 12, long_jump_right_2
+	beq $t1, 13, long_jump_right_2
+	beq $t1, 14, end_jump
+	
+long_jump_right_0:
+	li $t1, 1
+	li $t2, -1
+	sw $t1, player_x_velocity
+	sw $t2, player_y_velocity
+	j update_jump_frame
+	
+long_jump_right_1:
+	li $t1, 1
+	sw $t1, player_x_velocity
+	sw $zero, player_y_velocity
+	j update_jump_frame
+	
+long_jump_right_2:
+	li $t1, 1
+	sw $t1, player_x_velocity
+	sw $t1, player_y_velocity
+	j update_jump_frame
+	
+long_jump_left:
+	lw $t1, jump_frame
+	beq $t1, 0, long_jump_left_0
+	beq $t1, 1, long_jump_left_0
+	beq $t1, 2, long_jump_left_0
+	beq $t1, 3, long_jump_left_0
+	beq $t1, 4, long_jump_left_1
+	beq $t1, 5, long_jump_left_1
+	beq $t1, 6, long_jump_left_1
+	beq $t1, 7, long_jump_left_1
+	beq $t1, 8, long_jump_left_1
+	beq $t1, 9, long_jump_left_1
+	beq $t1, 10, long_jump_left_2
+	beq $t1, 11, long_jump_left_2
+	beq $t1, 12, long_jump_left_2
+	beq $t1, 13, long_jump_left_2
+	beq $t1, 14, end_jump
+	
+long_jump_left_0:
+	li $t1, -1
+	sw $t1, player_x_velocity
+	sw $t1, player_y_velocity
+	j update_jump_frame
+	
+long_jump_left_1:
+	li $t1, -1
+	sw $t1, player_x_velocity
+	sw $zero, player_y_velocity
+	j update_jump_frame
+	
+long_jump_left_2:
+	li $t1, -1
+	li $t2, 1
+	sw $t1, player_x_velocity
+	sw $t2, player_y_velocity
+	j update_jump_frame
 
 high_jump:
 	lw $t1, player_direction
@@ -290,7 +455,7 @@ high_jump_right_1:
 	
 high_jump_right_2:
 	li $t1, 1
-	li $t2, -1
+	li $t2, -2
 	sw $t1, player_x_velocity
 	sw $t2, player_y_velocity
 	j update_jump_frame
@@ -334,7 +499,7 @@ high_jump_left_1:
 	
 high_jump_left_2:
 	li $t1, -1
-	li $t2, -1
+	li $t2, -2
 	sw $t1, player_x_velocity
 	sw $t2, player_y_velocity
 	j update_jump_frame
