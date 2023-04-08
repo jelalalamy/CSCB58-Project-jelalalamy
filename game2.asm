@@ -44,13 +44,31 @@
 .eqv WAIT_TIME 40
 .eqv JUMP_HEIGHT 6
 .eqv RED_1 0xff0000
+.eqv RED_2 0xE53935
 .eqv ORANGE_1 0xF39C12
+.eqv ORANGE_2 0xFF6F00
 .eqv YELLOW_1 0xF4D03F 
 .eqv GREEN_1 0x229954
 .eqv GREEN_2 0xA3EB41
+.eqv GREEN_3 0x1B5E20
 .eqv BLUE_1 0x0000ff
 .eqv BLUE_2 0x00b9ff
 .eqv PURPLE_1 0x3F48CC
+.eqv PINK_1 0xEF9A9A
+.eqv PINK_2 0xFFCDD2
+.eqv PINK_3 0xFFEBEE
+.eqv BROWN_1 0x8D6E63
+.eqv BROWN_2 0xA1887F
+.eqv BROWN_3 0xBCAAA4
+.eqv TEAL_1 0x4DB6AC
+.eqv TEAL_2 0x80CBC4
+.eqv TEAL_3 0xB2DFDB
+.eqv SAND_1 0xFFD54F
+.eqv SAND_2 0xFFE082
+.eqv SAND_3 0xFFECB3
+.eqv CYAN_1 0x4DD0E1
+.eqv CYAN_2 0x80DEEA
+.eqv CYAN_3 0xB2EBF2
 .eqv BLACK 0x000000
 
 .data
@@ -87,6 +105,12 @@ bottom_collision_pixels_len: .word 0
 
 # Misc
 redraw_red_tp: .word 0
+redraw_pink_tp: .word 0
+redraw_brown_tp: .word 0
+redraw_teal_tp: .word 0
+redraw_sand_tp: .word 0
+redraw_cyan_tp: .word 0
+redraw_green_tp: .word 0
 
 ##################################################################### MAIN
 .text
@@ -620,6 +644,35 @@ check_portal_collisions:
 	add $a2, $a2, -1
 	jal compute_position_func
 	beq $a0, 24020, red_tp
+	beq $a0, 23764, red_tp
+	beq $a0, 18932, pink_tp
+	beq $a0, 18676, pink_tp
+	beq $a0, 16552, brown_tp
+	beq $a0, 16296, brown_tp
+	beq $a0, 14936, teal_tp
+	beq $a0, 14680, teal_tp
+	beq $a0, 7208, sand_tp
+	beq $a0, 6952, sand_tp
+	beq $a0, 9600, cyan_tp
+	beq $a0, 9344, cyan_tp
+	beq $a0, 1580, green_tp
+	beq $a0, 1324, green_tp
+	add $a2, $a2, -1
+	jal compute_position_func
+	beq $a0, 24020, red_tp
+	beq $a0, 23764, red_tp
+	beq $a0, 18932, pink_tp
+	beq $a0, 18676, pink_tp
+	beq $a0, 16552, brown_tp
+	beq $a0, 16296, brown_tp
+	beq $a0, 14936, teal_tp
+	beq $a0, 14680, teal_tp
+	beq $a0, 7208, sand_tp
+	beq $a0, 6952, sand_tp
+	beq $a0, 9600, cyan_tp
+	beq $a0, 9344, cyan_tp
+	beq $a0, 1580, green_tp
+	beq $a0, 1324, green_tp
 	j check_right_collisions
 	
 red_tp:
@@ -629,6 +682,62 @@ red_tp:
 	sw $t2, player_y
 	li $t1, 1
 	sw $t1, redraw_red_tp
+	j check_right_collisions
+	
+pink_tp:
+	li $t1, 57
+	li $t2, 17
+	sw $t1, player_x
+	sw $t2, player_y
+	li $t1, 1
+	sw $t1, redraw_pink_tp
+	j check_right_collisions
+	
+brown_tp:
+	li $t1, 6
+	li $t2, 65
+	sw $t1, player_x
+	sw $t2, player_y
+	li $t1, 1
+	sw $t1, redraw_brown_tp
+	j check_right_collisions
+	
+teal_tp:
+	li $t1, 3
+	li $t2, 16
+	sw $t1, player_x
+	sw $t2, player_y
+	li $t1, 1
+	sw $t1, redraw_teal_tp
+	j check_right_collisions
+	
+sand_tp:
+	li $t1, 35
+	li $t2, 11
+	sw $t1, player_x
+	sw $t2, player_y
+	li $t1, 1
+	sw $t1, redraw_sand_tp
+	j check_right_collisions
+	
+cyan_tp:
+	li $t1, 15
+	li $t2, 5
+	sw $t1, player_x
+	sw $t2, player_y
+	li $t1, 1
+	sw $t1, redraw_cyan_tp
+	j check_right_collisions
+	
+green_tp:
+	li $t1, 4
+	li $t2, 99
+	sw $t1, player_x
+	sw $t2, player_y
+	li $t1, 1
+	sw $t1, redraw_green_tp
+	j check_right_collisions
+	
 
 # Checking collision on the right side of the player
 check_right_collisions:
@@ -779,18 +888,103 @@ erase_old_objects:
 draw_new_objects:
 	lw $t1, redraw_red_tp
 	beq $t1, 1, draw_red_tp
+	lw $t1, redraw_pink_tp
+	beq $t1, 1, draw_pink_tp
+	lw $t1, redraw_brown_tp
+	beq $t1, 1, draw_brown_tp
+	lw $t1, redraw_teal_tp
+	beq $t1, 1, draw_teal_tp
+	lw $t1, redraw_sand_tp
+	beq $t1, 1, draw_sand_tp
+	lw $t1, redraw_cyan_tp
+	beq $t1, 1, draw_cyan_tp
+	lw $t1, redraw_green_tp
+	beq $t1, 1, draw_green_tp
 	j draw_new_player
 	
 draw_red_tp:
 	li $a0, 24532
-	li $a1, RED_1
+	li $a1, ORANGE_2
 	li $a2, ORANGE_1
 	li $a3, YELLOW_1
 	jal draw_portal_func
-	li $t1, GREEN_1
+	li $t1, SAND_3
 	li $t0, BASE_ADDRESS
 	sw $t1, 24532($t0)
 	sw $zero, redraw_red_tp
+	j draw_new_player
+	
+draw_pink_tp:
+	li $a0, 19444
+	li $a1, PINK_1
+	li $a2, PINK_2
+	li $a3, PINK_3
+	jal draw_portal_func
+	li $t1, TEAL_3
+	li $t0, BASE_ADDRESS
+	sw $t1, 19444($t0)
+	sw $zero, redraw_pink_tp
+	j draw_new_player
+	
+draw_brown_tp:
+	li $a0, 17064
+	li $a1, BROWN_1
+	li $a2, BROWN_2
+	li $a3, BROWN_3
+	jal draw_portal_func
+	li $t1, PINK_3
+	li $t0, BASE_ADDRESS
+	sw $t1, 17064($t0)
+	sw $zero, redraw_brown_tp
+	j draw_new_player
+	
+draw_teal_tp:
+	li $a0, 15448
+	li $a1, TEAL_1
+	li $a2, TEAL_2
+	li $a3, TEAL_3
+	jal draw_portal_func
+	li $t1, RED_2
+	li $t0, BASE_ADDRESS
+	sw $t1, 15448($t0)
+	sw $zero, redraw_teal_tp
+	j draw_new_player
+	
+draw_sand_tp:
+	li $a0, 7720
+	li $a1, SAND_1
+	li $a2, SAND_2
+	li $a3, SAND_3
+	jal draw_portal_func
+	li $t1, PURPLE_1
+	li $t0, BASE_ADDRESS
+	sw $t1, 7720($t0)
+	sw $zero, redraw_sand_tp
+	j draw_new_player
+	
+draw_cyan_tp:
+	li $a0, 10112
+	li $a1, CYAN_1
+	li $a2, CYAN_2
+	li $a3, CYAN_3
+	jal draw_portal_func
+	li $t1, ORANGE_2
+	li $t0, BASE_ADDRESS
+	sw $t1, 10112($t0)
+	sw $zero, redraw_cyan_tp
+	j draw_new_player
+	
+draw_green_tp:
+	li $a0, 2092
+	li $a1, GREEN_3
+	li $a2, GREEN_1
+	li $a3, GREEN_2
+	jal draw_portal_func
+	li $t1, CYAN_2
+	li $t0, BASE_ADDRESS
+	sw $t1, 2092($t0)
+	sw $zero, redraw_green_tp
+	j draw_new_player
 	
 # Draw player in the new position
 draw_new_player:
@@ -1033,9 +1227,39 @@ draw_floor:
 # Draw portals
 draw_portals:
 	li $a0, 24532
-	li $a1, RED_1
+	li $a1, ORANGE_2
 	li $a2, ORANGE_1
 	li $a3, YELLOW_1
+	jal draw_portal_func
+	li $a0, 19444
+	li $a1, PINK_1
+	li $a2, PINK_2
+	li $a3, PINK_3
+	jal draw_portal_func
+	li $a0, 17064
+	li $a1, BROWN_1
+	li $a2, BROWN_2
+	li $a3, BROWN_3
+	jal draw_portal_func
+	li $a0, 15448
+	li $a1, TEAL_1
+	li $a2, TEAL_2
+	li $a3, TEAL_3
+	jal draw_portal_func
+	li $a0, 7720
+	li $a1, SAND_1
+	li $a2, SAND_2
+	li $a3, SAND_3
+	jal draw_portal_func
+	li $a0, 10112
+	li $a1, CYAN_1
+	li $a2, CYAN_2
+	li $a3, CYAN_3
+	jal draw_portal_func
+	li $a0, 2092
+	li $a1, GREEN_3
+	li $a2, GREEN_1
+	li $a3, GREEN_2
 	jal draw_portal_func
 
 	#sw $t1, 24532($t0)
@@ -1043,14 +1267,149 @@ draw_portals:
 
 # Draw platforms	
 draw_platforms:
-	
 	li $a0, 24524
 	li $a1, 4
-	li $a2, GREEN_1
+	li $a2, SAND_3
 	jal draw_platform_func
 	li $a0, 22024
 	li $a1, 4
 	li $a2, ORANGE_1
+	jal draw_platform_func
+	li $a0, 20776
+	li $a1, 4
+	li $a2, CYAN_1
+	jal draw_platform_func
+	li $a0, 20836
+	li $a1, 5
+	li $a2, PINK_1
+	jal draw_platform_func
+	li $a0, 20872
+	li $a1, 1
+	li $a2, RED_2
+	jal draw_platform_func
+	li $a0, 20936
+	li $a1, 7
+	li $a2, PURPLE_1
+	jal draw_platform_func
+	li $a0, 19436
+	li $a1, 3
+	li $a2, TEAL_3
+	jal draw_platform_func
+	li $a0, 4832
+	li $a1, 2
+	li $a2, PINK_2
+	jal draw_platform_func
+	li $a0, 15600
+	li $a1, 2
+	li $a2, BLUE_1
+	jal draw_platform_func
+	li $a0, 14292
+	li $a1, 3
+	li $a2, YELLOW_1
+	jal draw_platform_func
+	li $a0, 16336
+	li $a1, 3
+	li $a2, ORANGE_2
+	jal draw_platform_func
+	li $a0, 17056
+	li $a1, 4
+	li $a2, PINK_3
+	jal draw_platform_func
+	li $a0, 14224
+	li $a1, 5
+	li $a2, CYAN_1
+	jal draw_platform_func
+	li $a0, 15440
+	li $a1, 5
+	li $a2, RED_2
+	jal draw_platform_func
+	li $a0, 16972
+	li $a1, 1
+	li $a2, GREEN_3
+	jal draw_platform_func
+	li $a0, 16992
+	li $a1, 1
+	li $a2, BLUE_1
+	jal draw_platform_func
+	li $a0, 14364
+	li $a1, 4
+	li $a2, SAND_3
+	jal draw_platform_func
+	li $a0, 15620
+	li $a1, 1
+	li $a2, PURPLE_1
+	jal draw_platform_func
+	li $a0, 16912
+	li $a1, 4
+	li $a2, BROWN_2
+	jal draw_platform_func
+	li $a0, 6624
+	li $a1, 2
+	li $a2, RED_2
+	jal draw_platform_func
+	li $a0, 10468
+	li $a1, 1
+	li $a2, GREEN_2
+	jal draw_platform_func
+	li $a0, 3384
+	li $a1, 1
+	li $a2, YELLOW_1
+	jal draw_platform_func	
+	li $a0, 4356
+	li $a1, 4
+	li $a2, TEAL_2
+	jal draw_platform_func
+	li $a0, 6724
+	li $a1, 3
+	li $a2, BLUE_1
+	jal draw_platform_func
+	li $a0, 7716
+	li $a1, 3
+	li $a2, PURPLE_1
+	jal draw_platform_func
+	li $a0, 10024
+	li $a1, 3
+	li $a2, PINK_1
+	jal draw_platform_func
+	li $a0, 6148
+	li $a1, 1
+	li $a2, BROWN_3
+	jal draw_platform_func
+	li $a0, 3468
+	li $a1, 1
+	li $a2, SAND_2
+	jal draw_platform_func
+	li $a0, 4496
+	li $a1, 2
+	li $a2, CYAN_3
+	jal draw_platform_func
+	li $a0, 10108
+	li $a1, 2
+	li $a2, ORANGE_2
+	jal draw_platform_func
+	li $a0, 12412
+	li $a1, 2
+	li $a2, GREEN_3
+	jal draw_platform_func
+	li $a0, 2084
+	li $a1, 6
+	li $a2, CYAN_2
+	jal draw_platform_func
+	li $a0, 2160
+	li $a1, 1
+	li $a2, RED_2
+	jal draw_platform_func
+	li $a0, 1676
+	li $a1, 1
+	li $a2, GREEN_2
+	jal draw_platform_func
+	li $a0, 2224
+	li $a1, 1
+	li $a2, CYAN_3
+	jal draw_platform_func
+	li $a0, 2780
+	li $a1, 5
+	li $a2, PURPLE_1
 	jal draw_platform_func
 	#sw $a2, 29384($t0)
 	
