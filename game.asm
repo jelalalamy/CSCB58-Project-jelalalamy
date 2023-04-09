@@ -86,8 +86,8 @@ loop_str: .asciiz "Sleeping then looping\n"
 newline: .asciiz "\n"
 
 # Player state
-player_x: .word 5	# ranges from 0-63
-player_y: .word 90	# ranges from 0-63
+player_x: .word 5	# ranges from 0-123
+player_y: .word 91	# ranges from 0-123
 player_x_velocity: .word 0
 player_y_velocity: .word 0
 player_direction: .word	1	# 0 for left, 1 for right
@@ -121,7 +121,6 @@ redraw_rocket: .word 0
 # Timer
 start_time_lo: .word 0
 start_time_hi: .word 0
-target_time: .word 120000000
 
 # Score
 score: .word 0
@@ -156,6 +155,7 @@ main:
 	jal game_loop_func
 	
 	# Finished game
+	jal display_end_screen_func
 	j end
 
 end:
@@ -186,8 +186,35 @@ check_user_input:
 	bne $t2, 1, check_player_state
 	# If key was pressed, store it in $t3
 	lw $t3, 4($t1)
+	# If p was pressed, reset game
+	beq $t3, 0x70, reset_game
 	# If q was pressed, then quit immediately, otherwise continue to check_on_platform
 	beq $t3, 0x71, game_loop_return
+	j check_player_state
+
+reset_game:
+	# Erase player
+	lw $a1, player_x
+	lw $a2, player_y
+	jal compute_position_func
+	# $a0 already stores the position so we can call erase_player_func immediately
+	jal erase_player_func
+	# Moveto beginning
+	li $t0, 5
+	li $t1, 91
+	sw $t0, player_x
+	sw $t1, player_y
+	# Reset score
+	sw $zero, score
+	lw $a1, score
+	li $a0, 27580
+	jal set_num_display_func
+	# Reset timer
+	li $v0, 30
+	syscall
+	sw $a0, start_time_lo
+	sw $a1, start_time_hi
+	j game_loop
 
 # Check the player state (0 = on platform 1 = jumping, 2 = falling)
 check_player_state:
@@ -1066,6 +1093,7 @@ update_time:
 	# Calculate the remaining time
 	li $t3, MAX_TIME
 	subu $t4, $t3, $t0
+	move $t7, $t4
 
    	# Print the elapsed time
     	#li $v0, 1	# system call for printing integer
@@ -1075,15 +1103,9 @@ update_time:
    	#li $v0, 4
    	#la $a0, newline
    	#syscall
+  
    	
-   	#sw $a2 26924($t0)
-	#sw $a2 26948($t0)
-	#sw $a2 26972($t0)
-	#sw $a2 27052($t0)
-	#sw $a2 27076($t0)
-   	
-   	# Update time display
-   	# Update the hundreds
+# Update time display
 update_hundreds:
    	li $t1, 100000
    	div $t4, $t1
@@ -1115,7 +1137,7 @@ update_ones:
 	mflo $a1
 	li $a0, 27484
 	jal set_num_display_func
-  	ble $t4, 0, game_loop_return
+  	ble $t7, 0, game_loop_return
 	
 # Sleep and loop
 sleep_and_loop:
@@ -1407,6 +1429,8 @@ init_level_func:
 
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
+	
+	jal clear_display_func
 	
 # Draw floor
 draw_floor:
@@ -2189,6 +2213,95 @@ set_num_display_end:
 	addi $sp, $sp, 4
 	jr $t1	
 
+display_end_screen_func:
+	# Store $ra on the stack since we'll be calling some functions
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	jal clear_display_func
+	
+	# Show score
+	lw $a1, score
+	li $a0, 12412
+	jal set_num_display_func
+	
+	lw $t0, BASE_ADDRESS
+	lw $t1, score
+
+	beq $t1, 0, display_loss
+	
+display_win:
+	li $t0, BASE_ADDRESS
+	li $t6, ORANGE_1
+	li $t7, BLUE_2
+	# Orange amongus in middle
+	sw $t6, 15228($t0)
+	sw $t6, 15232($t0)
+	sw $t6, 15236($t0)
+	sw $t7, 15484($t0)
+	sw $t7, 15488($t0)
+	sw $t6, 15492($t0)
+	sw $t6, 15740($t0)
+	sw $t6, 15744($t0)
+	sw $t6, 15748($t0)
+	sw $t6, 15996($t0)
+	sw $t6, 16004($t0)
+	# Purple amongus on left
+	li $t6, PURPLE_1
+	sw $t6, 15208($t0)
+	sw $t6, 15212($t0)
+	sw $t6, 15216($t0)
+	sw $t6, 15464($t0)
+	sw $t7, 15468($t0)
+	sw $t7, 15472($t0)
+	sw $t6, 15720($t0)
+	sw $t6, 15724($t0)
+	sw $t6, 15728($t0)
+	sw $t6, 15976($t0)
+	sw $t6, 15984($t0)
+	# Green amongus on right
+	li $t6, GREEN_2
+	sw $t6, 15256($t0)
+	sw $t6, 15260($t0)
+	sw $t6, 15264($t0)
+	sw $t7, 15512($t0)
+	sw $t7, 15516($t0)
+	sw $t6, 15520($t0)
+	sw $t6, 15768($t0)
+	sw $t6, 15772($t0)
+	sw $t6, 15776($t0)
+	sw $t6, 16020($t0)
+	sw $t6, 16024($t0)
+	sw $t6, 16028($t0)
+	sw $t6, 16032($t0)
+	j display_end_screen_end
+
+display_loss:
+	li $t0, BASE_ADDRESS
+	li $t6, RED_1
+	li $t7, BLUE_2
+	# Red amongus on floor
+	sw $t6, 15740($t0)
+	sw $t6, 15744($t0)
+	sw $t6, 15748($t0)
+	sw $t6, 15752($t0)
+	#sw $t6, 15996($t0)
+	sw $t6, 16000($t0)
+	sw $t7, 16004($t0)
+	sw $t6, 16008($t0)
+	sw $t6, 16252($t0)
+	sw $t6, 16256($t0)
+	sw $t7, 16260($t0)
+	sw $t6, 16264($t0)
+
+
+display_end_screen_end:
+	# Return to main
+	lw $t1, 0($sp)
+	addi $sp, $sp, 4
+	jr $t1	
+	
+
 ##################################################################### UTILITY HELPER FUNCTIONS
 # Helper function to compute position based on x and y coordinates
 # Using the formula pos(x,y) = (y*64 + x)*4
@@ -2198,4 +2311,20 @@ compute_position_func:
 	mul $a0, $a2, 64
 	add $a0, $a0, $a1
 	mul $a0, $a0, 4
+	jr $ra
+
+# Helper function to clear the display
+clear_display_func:
+	li $t0, BASE_ADDRESS
+	li $t1, BLACK
+	add $t2, $zero, BASE_ADDRESS
+	add $t2, $t2, 29436
+	
+clear_display_loop:
+	bge $t0, $t2, clear_display_end
+	sw $t1, ($t0)
+	add $t0, $t0, 4
+	j clear_display_loop
+	
+clear_display_end:
 	jr $ra
