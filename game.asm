@@ -42,7 +42,10 @@
 # Constants
 .eqv BASE_ADDRESS 0x10008000
 .eqv WAIT_TIME 40
+.eqv MAX_TIME 120000
 .eqv JUMP_HEIGHT 6
+
+# Colours
 .eqv RED_1 0xff0000
 .eqv RED_2 0xE53935
 .eqv ORANGE_1 0xF39C12
@@ -79,6 +82,7 @@ init_level_str: .asciiz "Initializing level\n"
 pressed_q: .asciiz "Pressed q - ending game\n"
 test_str: .asciiz "Something happened\n"
 loop_str: .asciiz "Sleeping then looping\n"
+newline: .asciiz "\n"
 
 # Player state
 player_x: .word 5	# ranges from 0-63
@@ -103,7 +107,7 @@ right_collision_pixels_len: .word 0
 bottom_collision_pixels: .space 4096
 bottom_collision_pixels_len: .word 0
 
-# Misc
+# Portals
 redraw_red_tp: .word 0
 redraw_pink_tp: .word 0
 redraw_brown_tp: .word 0
@@ -111,6 +115,11 @@ redraw_teal_tp: .word 0
 redraw_sand_tp: .word 0
 redraw_cyan_tp: .word 0
 redraw_green_tp: .word 0
+
+# Timer
+start_time_lo: .word 0
+start_time_hi: .word 0
+target_time: .word 120000000
 
 ##################################################################### MAIN
 .text
@@ -126,6 +135,9 @@ main:
 	
 	# Init player
 	jal init_player_func
+	
+	# Start timer
+	jal start_timer_func
 	
 	# Main game loop
 	jal game_loop_func
@@ -995,11 +1007,36 @@ draw_new_player:
 	# $a0 already stores the position so we can call draw_player_func immediately
 	jal draw_player_func
 	
+# Update timer
+update_time:
+    	# Get the current time
+    	li $v0, 30          # system call for getting time
+    	syscall             # issue the system call
+
+    	# Calculate the elapsed time
+    	lw $t0, start_time_lo    # load the low order bits of the start time
+    	lw $t1, start_time_hi    # load the high order bits of the start time
+    	subu $t0, $a0, $t0       # subtract the low order bits of the start time from the current time
+    	sltu $t2, $a0, $t0       # check if the current time is less than the start time
+    	subu $t1, $a1, $t2       # subtract the carry from the high order bits if necessary
+
+	# Calculate the remaining time
+	li $t3, MAX_TIME
+	subu $t4, $t3, $t0
+
+   	# Print the elapsed time
+    	li $v0, 1	# system call for printing integer
+    	move $a0, $t4	# move the elapsed time to $a0
+   	syscall	# issue the system call
+    
+    	li $v0, 4
+    	la $a0, newline
+    	syscall
+    	
+    	ble $t4, 0, game_loop_return
+	
 # Sleep and loop
 sleep_and_loop:
-	#li $v0, 4
-	#la $a0, loop_str
-	#syscall
 	
 	li $v0, 32
 	li $a0, WAIT_TIME
@@ -1495,6 +1532,14 @@ init_player_func:
 	lw $t1, 0($sp)
 	addi $sp, $sp, 4
 	jr $t1	
+
+# Function to start timer
+start_timer_func:
+	li $v0, 30
+	syscall
+	sw $a0, start_time_lo
+	sw $a1, start_time_hi
+	jr $ra
 
 ##################################################################### UTILITY HELPER FUNCTIONS
 # Helper function to compute position based on x and y coordinates
