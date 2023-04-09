@@ -73,6 +73,7 @@
 .eqv CYAN_2 0x80DEEA
 .eqv CYAN_3 0xB2EBF2
 .eqv BLACK 0x000000
+.eqv GRAY 0x7F8C8D
 
 .data
 # Strings
@@ -115,6 +116,7 @@ redraw_teal_tp: .word 0
 redraw_sand_tp: .word 0
 redraw_cyan_tp: .word 0
 redraw_green_tp: .word 0
+redraw_rocket: .word 0
 
 # Timer
 start_time_lo: .word 0
@@ -144,7 +146,7 @@ main:
 	
 	# Score 0
 	lw $a1, score
-	li $a0, 27564
+	li $a0, 27580
 	jal set_num_display_func
 	
 	# Start timer
@@ -674,13 +676,16 @@ update_score:
 	lw $a1, score
 	add $a1, $a1, 1
 	sw $a1, score
-	li $a0, 27564
+	li $a0, 27580
 	jal set_num_display_func
 	# Send player to beginning
 	li $t1, 5
 	li $t2, 91
 	sw $t1, player_x
 	sw $t2, player_y
+	# Redraw rocket
+	li $t1, 1
+	sw $t1, redraw_rocket
 
 check_portal_collisions:
 	lw $a1, player_x
@@ -944,6 +949,12 @@ draw_new_objects:
 	beq $t1, 1, draw_cyan_tp
 	lw $t1, redraw_green_tp
 	beq $t1, 1, draw_green_tp
+	lw $t1, redraw_rocket
+	beq $t1, 1, draw_rocket
+	j draw_new_player
+	
+draw_rocket:
+	jal draw_rocket_func
 	j draw_new_player
 	
 draw_red_tp:
@@ -1351,6 +1362,40 @@ erase_player_func:
 	add $t3, $a0, -4
 	sw $t1, ($t3)
 	jr $ra	
+	
+# Function to draw the rocket
+draw_rocket_func:
+	li $t0, BASE_ADDRESS
+	li $t1, RED_2
+	li $t2, GRAY
+	
+	# Red parts
+	sw $t1, 2284($t0)
+	sw $t1, 2292($t0)
+	sw $t1, 2276($t0)
+	
+	sw $t1, 2028($t0)
+	sw $t1, 2036($t0)
+	sw $t1, 2020($t0)
+	
+	sw $t1, 1772($t0)
+	
+	# Gray parts
+	sw $t2, 1004($t0)
+	sw $t2, 1260($t0)
+	sw $t2, 1516($t0)
+	sw $t2, 1520($t0)
+	sw $t2, 1776($t0)
+	sw $t2, 2032($t0)
+	sw $t2, 2288($t0)
+	sw $t2, 2544($t0)
+	sw $t2, 1512($t0)
+	sw $t2, 1768($t0)
+	sw $t2, 2024($t0)
+	sw $t2, 2280($t0)
+	sw $t2, 2536($t0)
+	
+	jr $ra
 
 # Function to draw the inital level (platforms and stuff)
 # No parameters or return 
@@ -1374,9 +1419,6 @@ draw_floor:
 	jal draw_platform_func
 	sw $a2 25600($t0)
 	sw $a2 25852($t0)
-	
-	# Temp win con
-	sw $a2 2284($t0)
 	
 # Draw portals
 draw_portals:
@@ -1415,6 +1457,7 @@ draw_portals:
 	li $a2, GREEN_1
 	li $a3, GREEN_2
 	jal draw_portal_func
+	jal draw_rocket_func
 
 # Draw platforms	
 draw_platforms:
