@@ -133,6 +133,9 @@ main:
 	# Init level
 	jal init_level_func
 	
+	#li $a0, 26924
+	#jal draw_zero_func
+	
 	# Init player
 	jal init_player_func
 	
@@ -1032,15 +1035,54 @@ update_time:
 	subu $t4, $t3, $t0
 
    	# Print the elapsed time
-    	li $v0, 1	# system call for printing integer
-    	move $a0, $t4	# move the elapsed time to $a0
-   	syscall	# issue the system call
+    	#li $v0, 1	# system call for printing integer
+    	#move $a0, $t4	# move the elapsed time to $a0
+  	#syscall	# issue the system call
     
-    	li $v0, 4
-    	la $a0, newline
-    	syscall
-    	
-    	ble $t4, 0, game_loop_return
+   	#li $v0, 4
+   	#la $a0, newline
+   	#syscall
+   	
+   	#sw $a2 26924($t0)
+	#sw $a2 26948($t0)
+	#sw $a2 26972($t0)
+	#sw $a2 27052($t0)
+	#sw $a2 27076($t0)
+   	
+   	# Update time display
+   	# Update the hundreds
+update_hundreds:
+   	li $t1, 100000
+   	div $t4, $t1
+	mflo $a1
+	li $a0, 27436
+	jal set_num_display_func
+	bge $t4, 100000, more_than_hundred
+	j update_tens
+	
+more_than_hundred:
+	add $t4, $t4, -100000
+	
+update_tens:
+	li $t1, 10000
+	div $t4, $t1
+	mflo $a1
+	li $a0, 27460
+	jal set_num_display_func
+	bge $t4, 10000, more_than_ten
+	j update_ones
+	
+more_than_ten:
+	mul $t2, $a1, -10000
+	add $t4, $t4, $t2
+	
+update_ones:
+	li $t1, 1000
+	div $t4, $t1
+	mflo $a1
+	li $a0, 27484
+	jal set_num_display_func
+  	ble $t4, 0, game_loop_return
 	
 # Sleep and loop
 sleep_and_loop:
@@ -1309,9 +1351,6 @@ draw_portals:
 	li $a3, GREEN_2
 	jal draw_portal_func
 
-	#sw $t1, 24532($t0)
-	#sw $t1, 21520($t0)
-
 # Draw platforms	
 draw_platforms:
 	li $a0, 24524
@@ -1458,7 +1497,6 @@ draw_platforms:
 	li $a1, 6
 	li $a2, PURPLE_1
 	jal draw_platform_func
-	#sw $a2, 29384($t0)
 	
 draw_amongus:
 	li $t0, BASE_ADDRESS
@@ -1550,6 +1588,498 @@ start_timer_func:
 	sw $a0, start_time_lo
 	sw $a1, start_time_hi
 	jr $ra
+	
+# Function to draw zero in a 4x7 box
+# $a0 - top left position of the square
+draw_zero_func:
+	li $v0, 1
+	li $t0, BASE_ADDRESS
+	li $t1, RED_1
+	add $a0, $a0, $t0
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	jr $ra
+	
+draw_one_func:
+	li $v0, 1
+	li $t0, BASE_ADDRESS
+	li $t1, RED_1
+	add $a0, $a0, $t0
+	add $a0, $a0, 12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	jr $ra
+	
+draw_two_func:
+	li $v0, 1
+	li $t0, BASE_ADDRESS
+	li $t1, RED_1
+	add $a0, $a0, $t0
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	jr $ra
+	
+draw_three_func:
+	li $v0, 1
+	li $t0, BASE_ADDRESS
+	li $t1, RED_1
+	add $a0, $a0, $t0
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, 768
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, -256
+	sw $t1, ($a0)
+	add $a0, $a0, -256
+	sw $t1, ($a0)
+	jr $ra
+	
+draw_four_func:
+	li $v0, 1
+	li $t0, BASE_ADDRESS
+	li $t1, RED_1
+	add $a0, $a0, $t0
+	sw $t1, ($a0)
+	add $a0, $a0, 12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, 268
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	jr $ra
+
+draw_five_func:
+	li $v0, 1
+	li $t0, BASE_ADDRESS
+	li $t1, RED_1
+	add $a0, $a0, $t0
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 244
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	jr $ra
+	
+draw_six_func:
+	li $v0, 1
+	li $t0, BASE_ADDRESS
+	li $t1, RED_1
+	add $a0, $a0, $t0
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 244
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -256
+	sw $t1, ($a0)
+	add $a0, $a0, -256
+	sw $t1, ($a0)
+	jr $ra
+	
+draw_seven_func:
+	li $v0, 1
+	li $t0, BASE_ADDRESS
+	li $t1, RED_1
+	add $a0, $a0, $t0
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	jr $ra
+	
+draw_eight_func:
+	li $v0, 1
+	li $t0, BASE_ADDRESS
+	li $t1, RED_1
+	add $a0, $a0, $t0
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	jr $ra
+	
+draw_nine_func:
+	li $v0, 1
+	li $t0, BASE_ADDRESS
+	li $t1, RED_1
+	add $a0, $a0, $t0
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 4
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 12
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, 268
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, 256
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	add $a0, $a0, -4
+	sw $t1, ($a0)
+	jr $ra
+	
+# Function to set number display
+# $a0 - position of top left pixel
+# $a1 - number
+set_num_display_func:
+	# Store $ra on the stack since we'll be calling some functions
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	# Clear the 4x7 square first
+	li $t0, BASE_ADDRESS
+	add $t0, $t0, $a0
+	li $t1, BLACK
+	sw $t1, ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 256
+	sw $t1 ($t0)
+	add $t0, $t0, -4
+	sw $t1 ($t0)
+	add $t0, $t0, -4
+	sw $t1 ($t0)
+	add $t0, $t0, -4
+	sw $t1 ($t0)
+	add $t0, $t0, 256
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 256
+	sw $t1 ($t0)
+	add $t0, $t0, -4
+	sw $t1 ($t0)
+	add $t0, $t0, -4
+	sw $t1 ($t0)
+	add $t0, $t0, -4
+	sw $t1 ($t0)
+	add $t0, $t0, 256
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 256
+	sw $t1 ($t0)
+	add $t0, $t0, -4
+	sw $t1 ($t0)
+	add $t0, $t0, -4
+	sw $t1 ($t0)
+	add $t0, $t0, -4
+	sw $t1 ($t0)
+	add $t0, $t0, 256
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	add $t0, $t0, 4
+	sw $t1 ($t0)
+	
+	beq $a1, 0, set_zero
+	beq $a1, 1, set_one
+	beq $a1, 2, set_two
+	beq $a1, 3, set_three
+	beq $a1, 4, set_four
+	beq $a1, 5, set_five
+	beq $a1, 6, set_six
+	beq $a1, 7, set_seven
+	beq $a1, 8, set_eight
+	beq $a1, 9, set_nine
+	
+set_zero:
+	jal draw_zero_func
+	j set_num_display_end
+	
+set_one:
+	jal draw_one_func
+	j set_num_display_end
+	
+set_two:
+	jal draw_two_func
+	j set_num_display_end
+	
+set_three:
+	jal draw_three_func
+	j set_num_display_end
+	
+set_four:
+	jal draw_four_func
+	j set_num_display_end
+	
+set_five:
+	jal draw_five_func
+	j set_num_display_end
+	
+set_six:
+	jal draw_six_func
+	j set_num_display_end
+	
+set_seven:
+	jal draw_seven_func
+	j set_num_display_end
+	
+set_eight:
+	jal draw_eight_func
+	j set_num_display_end
+	
+set_nine:
+	jal draw_nine_func
+	j set_num_display_end
+
+set_num_display_end:	
+	# Return to main
+	lw $t1, 0($sp)
+	addi $sp, $sp, 4
+	jr $t1	
 
 ##################################################################### UTILITY HELPER FUNCTIONS
 # Helper function to compute position based on x and y coordinates
