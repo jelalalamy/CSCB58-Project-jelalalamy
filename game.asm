@@ -650,6 +650,13 @@ update_y_position:
 # Check for collisions
 check_collisions:
 
+check_ship_collision:
+	lw $a1, player_x
+	lw $a2, player_y
+	add $a2, $a2, -1
+	jal compute_position_func
+	beq $a0, 2284, game_loop_return
+
 check_portal_collisions:
 	lw $a1, player_x
 	lw $a2, player_y
@@ -1261,6 +1268,9 @@ draw_floor:
 	sw $a2 25600($t0)
 	sw $a2 25852($t0)
 	
+	# Temp win con
+	sw $a2 2284($t0)
+	
 # Draw portals
 draw_portals:
 	li $a0, 24532
@@ -1445,7 +1455,7 @@ draw_platforms:
 	li $a2, CYAN_3
 	jal draw_platform_func
 	li $a0, 2780
-	li $a1, 5
+	li $a1, 6
 	li $a2, PURPLE_1
 	jal draw_platform_func
 	#sw $a2, 29384($t0)
