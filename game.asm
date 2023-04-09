@@ -121,6 +121,9 @@ start_time_lo: .word 0
 start_time_hi: .word 0
 target_time: .word 120000000
 
+# Score
+score: .word 0
+
 ##################################################################### MAIN
 .text
 .globl main
@@ -138,6 +141,11 @@ main:
 	
 	# Init player
 	jal init_player_func
+	
+	# Score 0
+	lw $a1, score
+	li $a0, 27564
+	jal set_num_display_func
 	
 	# Start timer
 	jal start_timer_func
@@ -658,7 +666,21 @@ check_ship_collision:
 	lw $a2, player_y
 	add $a2, $a2, -1
 	jal compute_position_func
-	beq $a0, 2284, game_loop_return
+	beq $a0, 2284, update_score
+	j check_portal_collisions
+	
+update_score:
+	# Update score
+	lw $a1, score
+	add $a1, $a1, 1
+	sw $a1, score
+	li $a0, 27564
+	jal set_num_display_func
+	# Send player to beginning
+	li $t1, 5
+	li $t2, 91
+	sw $t1, player_x
+	sw $t2, player_y
 
 check_portal_collisions:
 	lw $a1, player_x
@@ -1210,7 +1232,50 @@ draw_portal_func:
 # $a0 - position (compute using compute_position_func, or just pass an immediate)
 draw_player_func:
 	li $t0, BASE_ADDRESS
+	lw $t3, score
+	beq $t3, 0, zero_colour
+	beq $t3, 1, one_colour
+	beq $t3, 2, two_colour
+	beq $t3, 3, three_colour
+	beq $t3, 4, four_colour
+	beq $t3, 5, five_colour
+	beq $t3, 6, six_colour
+	bge $t3, 7, seven_colour
+	j draw_pl
+	
+zero_colour:
 	li $t1, RED_1
+	j draw_pl
+	
+one_colour:
+	li $t1, ORANGE_2
+	j draw_pl
+	
+two_colour:
+	li $t1, CYAN_2
+	j draw_pl
+	
+three_colour:
+	li $t1, GREEN_2
+	j draw_pl
+	
+four_colour:
+	li $t1, YELLOW_1
+	j draw_pl
+	
+five_colour:
+	li $t1, PINK_2
+	j draw_pl
+	
+six_colour:
+	li $t1, RED_2
+	j draw_pl
+	
+seven_colour:
+	li $t1, TEAL_1
+	j draw_pl
+	
+draw_pl:
 	li $t2, BLUE_2
 	add $a0, $a0, $t0
 	# Draw feet
