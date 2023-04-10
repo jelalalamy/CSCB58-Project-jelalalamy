@@ -14,14 +14,14 @@
 #
 # Which milestones have been reached in this submission?
 # (See the assignment handout for descriptions of the milestones)
-# - Milestone 1/2/3 (choose the one the applies)
+# - Milestone 3
 #
 # Which approved features have been implemented for milestone 3?
 # (See the assignment handout for the list of additional features)
-# 1. (fill in the feature, if any)
-# 2. (fill in the feature, if any)
-# 3. (fill in the feature, if any)
-# ... (add more if necessary)
+# 1. Health/score
+# 2. Fail condition
+# 3. Win condition
+# 4. Start menu
 #
 # Link to video demonstration for final submission:
 # - (insert YouTube / MyMedia / other URL here). Make sure we can view it!
@@ -31,12 +31,14 @@
 #
 # Any additional information that the TA needs to know:
 # - Controls:
-# - a: move left
-# - d: move right
+# - a: move left / turn left
+# - d: move right / turn right
 # - j: short jump
 # - k: middle jump
 # - l: long jump
 # - space: high jump
+# - p: resets the game
+# - q: immediately ends the game
 #
 ##################################################################### DATA
 # Constants
@@ -1322,7 +1324,7 @@ six_colour:
 	j draw_pl
 	
 seven_colour:
-	li $t1, TEAL_1
+	li $t1, TEAL_3
 	j draw_pl
 	
 draw_pl:
