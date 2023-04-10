@@ -27,7 +27,7 @@
 # - https://www.youtube.com/watch?v=sGK3-8EI6ZQ
 #
 # Are you OK with us sharing the video with people outside course staff?
-# - yes, and please share this project github link as well!
+# - yes, and please share this project github link as well! https://github.com/jelalalamy/CSCB58-Project-jelalalamy
 #
 # Any additional information that the TA needs to know:
 # - Controls:
