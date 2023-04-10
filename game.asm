@@ -9,7 +9,7 @@
 # - Unit width in pixels: 8
 # - Unit height in pixels: 8
 # - Display width in pixels: 512
-# - Display height in pixels: 512
+# - Display height in pixels: 1024
 # - Base Address for Display: 0x10008000 ($gp)
 #
 # Which milestones have been reached in this submission?
