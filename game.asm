@@ -79,6 +79,7 @@
 # Strings
 start_str: .asciiz "Game started\n"
 end_str: .asciiz "Game finished\n"
+main_menu_str: .asciiz "In main menu\n"
 init_level_str: .asciiz "Initializing level\n"
 pressed_q: .asciiz "Pressed q - ending game\n"
 test_str: .asciiz "Something happened\n"
@@ -129,16 +130,32 @@ score: .word 0
 .text
 .globl main
 main:
+main_menu:
+	# Display main menu
+	li $v0, 4
+	la $a0, main_menu_str
+	syscall	
+	jal display_main_menu_func
+
+main_menu_loop:
+	li $t1, 0xffff0000
+	lw $t2, 0($t1)
+	# If no key was pressed, loop
+	bne $t2, 1, main_menu_loop
+	# If key was pressed, check if it was s or q (or neither)
+	lw $t3, 4($t1)
+	beq $t3, 0x73, game
+	beq $t3, 0x71, end
+	j main_menu_loop
+
+game:	
 	# Print start message
 	li $v0, 4
 	la $a0, start_str
 	syscall	
-	
+
 	# Init level
 	jal init_level_func
-	
-	#li $a0, 26924
-	#jal draw_zero_func
 	
 	# Init player
 	jal init_player_func
@@ -2296,6 +2313,270 @@ display_loss:
 
 
 display_end_screen_end:
+	# Return to main
+	lw $t1, 0($sp)
+	addi $sp, $sp, 4
+	jr $t1	
+	
+display_main_menu_func:
+	# Store $ra on the stack since we'll be calling some functions
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	jal clear_display_func
+	
+	li $t0, BASE_ADDRESS
+	li $t7, BLUE_2
+	# Red amongus
+	li $t6, RED_1
+	sw $t6, 15216($t0)
+	sw $t6, 15220($t0)
+	sw $t6, 15224($t0)
+	sw $t7, 15472($t0)
+	sw $t7, 15476($t0)
+	sw $t6, 15480($t0)
+	sw $t6, 15728($t0)
+	sw $t6, 15732($t0)
+	sw $t6, 15736($t0)
+	sw $t6, 15984($t0)
+	sw $t6, 15992($t0)
+	
+	li $v0, 32
+	li $a0, 1500
+	syscall
+	# Purple amongus
+	li $t6, PURPLE_1
+	sw $t6, 15196($t0)
+	sw $t6, 15200($t0)
+	sw $t6, 15204($t0)
+	sw $t6, 15452($t0)
+	sw $t7, 15456($t0)
+	sw $t7, 15460($t0)
+	sw $t6, 15708($t0)
+	sw $t6, 15712($t0)
+	sw $t6, 15716($t0)
+	sw $t6, 15964($t0)
+	sw $t6, 15972($t0)
+	# Orange amongus
+	li $t6, ORANGE_1
+	sw $t6, 15236($t0)
+	sw $t6, 15240($t0)
+	sw $t6, 15244($t0)
+	sw $t6, 15492($t0)
+	sw $t7, 15496($t0)
+	sw $t7, 15500($t0)
+	sw $t6, 15748($t0)
+	sw $t6, 15752($t0)
+	sw $t6, 15756($t0)
+	sw $t6, 16004($t0)
+	sw $t6, 16012($t0)
+	# Green amongus
+	li $t6, GREEN_2
+	sw $t6, 15256($t0)
+	sw $t6, 15260($t0)
+	sw $t6, 15264($t0)
+	sw $t7, 15512($t0)
+	sw $t7, 15516($t0)
+	sw $t6, 15520($t0)
+	sw $t6, 15768($t0)
+	sw $t6, 15772($t0)
+	sw $t6, 15776($t0)
+	sw $t6, 16024($t0)
+	sw $t6, 16032($t0)
+	
+	li $v0, 32
+	li $a0, 1500
+	syscall
+	
+	# Other amongus
+	li $t6, RED_2
+	sw $t6, 11952($t0)
+	sw $t6, 11956($t0)
+	sw $t6, 11960($t0)
+	sw $t6, 12208($t0)
+	sw $t7, 12212($t0)
+	sw $t7, 12216($t0)
+	sw $t6, 12464($t0)
+	sw $t6, 12468($t0)
+	sw $t6, 12472($t0)
+	sw $t6, 12720($t0)
+	sw $t6, 12728($t0)
+	
+	li $v0, 32
+	li $a0, 1500
+	syscall
+	
+	# S to start
+	sw $t6, 10808($t0)
+	sw $t6, 10548($t0)
+	sw $t6, 10288($t0)
+	sw $t6, 10284($t0)
+	sw $t6, 10280($t0)
+	sw $t6, 10276($t0)
+	sw $t6, 10528($t0)
+	sw $t6, 10780($t0)
+	sw $t6, 11036($t0)
+	sw $t6, 11292($t0)
+	sw $t6, 11552($t0)
+	sw $t6, 11812($t0)
+	sw $t6, 11816($t0)
+	sw $t6, 11820($t0)
+	sw $t6, 11824($t0)
+	sw $t6, 12084($t0)
+	sw $t6, 12344($t0)
+	sw $t6, 12600($t0)
+	sw $t6, 12856($t0)
+	sw $t6, 13108($t0)
+	sw $t6, 13360($t0)
+	sw $t6, 13356($t0)
+	sw $t6, 13352($t0)
+	sw $t6, 13348($t0)
+	sw $t6, 13088($t0)
+	sw $t6, 12828($t0)
+	
+	sw $t6, 11604($t0)
+	sw $t6, 11608($t0)
+	sw $t6, 11612($t0)
+	sw $t6, 11864($t0)
+	sw $t6, 12120($t0)
+	sw $t6, 12376($t0)
+	sw $t6, 12632($t0)
+	
+	sw $t6, 11880($t0)
+	sw $t6, 11884($t0)
+	sw $t6, 11888($t0)
+	sw $t6, 12136($t0)
+	sw $t6, 12392($t0)
+	sw $t6, 12648($t0)
+	sw $t6, 12652($t0)
+	sw $t6, 12656($t0)
+	sw $t6, 12400($t0)
+	sw $t6, 12144($t0)
+	
+	sw $t6, 11664($t0)
+	sw $t6, 11660($t0)
+	sw $t6, 11656($t0)
+	sw $t6, 11912($t0)
+	sw $t6, 12168($t0)
+	sw $t6, 12172($t0)
+	sw $t6, 12176($t0)
+	sw $t6, 12432($t0)
+	sw $t6, 12688($t0)
+	sw $t6, 12684($t0)
+	sw $t6, 12680($t0)
+	
+	sw $t6, 11932($t0)
+	sw $t6, 11936($t0)
+	sw $t6, 11940($t0)
+	sw $t6, 12192($t0)
+	sw $t6, 12448($t0)
+	sw $t6, 12704($t0)
+	
+	sw $t6, 11972($t0)
+	sw $t6, 11976($t0)
+	sw $t6, 11980($t0)
+	sw $t6, 12228($t0)
+	sw $t6, 12236($t0)
+	sw $t6, 12484($t0)
+	sw $t6, 12740($t0)
+	
+	sw $t6, 11992($t0)
+	sw $t6, 11996($t0)
+	sw $t6, 12000($t0)
+	sw $t6, 12252($t0)
+	sw $t6, 12508($t0)
+	sw $t6, 12764($t0)
+	
+	# Q to quit
+	sw $t6, 17968($t0)
+	sw $t6, 18220($t0)
+	sw $t6, 18472($t0)
+	sw $t6, 18728($t0)
+	sw $t6, 18984($t0)
+	sw $t6, 19240($t0)
+	sw $t6, 19496($t0)
+	sw $t6, 19752($t0)
+	sw $t6, 20008($t0)
+	sw $t6, 20264($t0)
+	sw $t6, 20520($t0)
+	sw $t6, 20780($t0)
+	sw $t6, 21040($t0)
+	sw $t6, 21044($t0)
+	sw $t6, 21048($t0)
+	sw $t6, 21052($t0)
+	sw $t6, 20800($t0)
+	sw $t6, 20548($t0)
+	sw $t6, 20292($t0)
+	sw $t6, 20036($t0)
+	sw $t6, 19780($t0)
+	sw $t6, 19524($t0)
+	sw $t6, 19268($t0)
+	sw $t6, 19012($t0)
+	sw $t6, 18756($t0)
+	sw $t6, 18500($t0)
+	sw $t6, 18240($t0)
+	sw $t6, 17980($t0)
+	sw $t6, 17976($t0)
+	sw $t6, 17972($t0)
+	sw $t6, 21060($t0)
+	sw $t6, 21320($t0)
+	sw $t6, 20540($t0)
+	
+	sw $t6, 19296($t0)
+	sw $t6, 19300($t0)
+	sw $t6, 19304($t0)
+	sw $t6, 19556($t0)
+	sw $t6, 19812($t0)
+	sw $t6, 20068($t0)
+	sw $t6, 20324($t0)
+	
+	sw $t6, 19572($t0)
+	sw $t6, 19576($t0)
+	sw $t6, 19580($t0)
+	sw $t6, 19828($t0)
+	sw $t6, 20084($t0)
+	sw $t6, 20340($t0)
+	sw $t6, 20344($t0)
+	sw $t6, 20348($t0)
+	sw $t6, 20092($t0)
+	sw $t6, 19836($t0)
+	
+	sw $t6, 19348($t0)
+	sw $t6, 19352($t0)
+	sw $t6, 19356($t0)
+	sw $t6, 19604($t0)
+	sw $t6, 19612($t0)
+	sw $t6, 19860($t0)
+	sw $t6, 19868($t0)
+	sw $t6, 20116($t0)
+	sw $t6, 20120($t0)
+	sw $t6, 20124($t0)
+	sw $t6, 20380($t0)
+	sw $t6, 20384($t0)
+	
+	sw $t6, 19628($t0)
+	sw $t6, 19636($t0)
+	sw $t6, 19884($t0)
+	sw $t6, 20140($t0)
+	sw $t6, 20396($t0)
+	sw $t6, 20400($t0)
+	sw $t6, 20404($t0)
+	sw $t6, 20148($t0)
+	sw $t6, 19892($t0)
+	
+	sw $t6, 19648($t0)
+	sw $t6, 19904($t0)
+	sw $t6, 20160($t0)
+	sw $t6, 20416($t0)
+	
+	sw $t6, 19660($t0)
+	sw $t6, 19664($t0)
+	sw $t6, 19668($t0)
+	sw $t6, 19920($t0)
+	sw $t6, 20176($t0)
+	sw $t6, 20432($t0)
+
+display_main_menu_end:
 	# Return to main
 	lw $t1, 0($sp)
 	addi $sp, $sp, 4
