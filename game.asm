@@ -24,7 +24,7 @@
 # 4. Start menu
 #
 # Link to video demonstration for final submission:
-# - (insert YouTube / MyMedia / other URL here). Make sure we can view it!
+# - https://www.youtube.com/watch?v=sGK3-8EI6ZQ
 #
 # Are you OK with us sharing the video with people outside course staff?
 # - yes, and please share this project github link as well!
@@ -43,7 +43,7 @@
 ##################################################################### DATA
 # Constants
 .eqv BASE_ADDRESS 0x10008000
-.eqv WAIT_TIME 40
+.eqv WAIT_TIME 33
 .eqv MAX_TIME 120000
 .eqv JUMP_HEIGHT 6
 
